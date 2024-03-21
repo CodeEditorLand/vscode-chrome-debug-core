@@ -83,7 +83,7 @@
 		"tslint-microsoft-contrib": "^5.0.3",
 		"typemoq": "^2.1.0",
 		"typescript": "^2.7.2",
-		"typescript-esbuild": "latest",
+		"typescript-esbuild": "0.4.5",
 		"vscode-nls-dev": "^3.3.2"
 	},
 	"publishConfig": {

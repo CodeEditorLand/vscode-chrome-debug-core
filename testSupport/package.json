@@ -30,7 +30,7 @@
 	"devDependencies": {
 		"@types/node": "^7.0.8",
 		"typescript": "^2.4.2",
-		"typescript-esbuild": "latest",
+		"typescript-esbuild": "0.4.5",
 		"vscode-chrome-debug-core": "^6.7.52",
 		"vscode-debugprotocol": "^1.32.0"
 	},
