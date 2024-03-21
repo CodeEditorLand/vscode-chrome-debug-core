@@ -1,48 +1,11 @@
 {
-	"name": "vscode-chrome-debug-core",
-	"displayName": "vscode-chrome-debug-core",
-	"version": "0.0.1",
-	"private": false,
-	"description": "A library for building VS Code debug adapters for targets that support the Chrome Remote Debug Protocol",
-	"homepage": "https://github.com/CodeEditorLand/Foundation#readme",
-	"bugs": {
-		"url": "https://github.com/CodeEditorLand/Foundation/issues"
-	},
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/CodeEditorLand/Foundation.git"
-	},
-	"license": "SEE LICENSE IN LICENSE",
 	"author": {
-		"name": "Playform",
 		"email": "Hello@Playform.Cloud",
+		"name": "Playform",
 		"url": "https://playform.cloud"
 	},
-	"type": "module",
-	"main": "./out/src/index",
-	"typings": "./lib/src/index.d.ts",
-	"scripts": {
-		"build": "gulp build",
-		"major": "npm version major -m '%s'",
-		"minor": "npm version minor -m '%s'",
-		"patch": "npm version patch -m '%s'",
-		"prepare": "gulp build",
-		"prepublishOnly": "TypeScriptESBuild 'Source/**/*.ts'",
-		"testCoverage": "nyc mocha --require source-map-support/register  --exit --recursive -u tdd ./out/test/**/*.test.js",
-		"tslint": "gulp tslint",
-		"watch": "gulp watch"
-	},
-	"nyc": {
-		"all": true,
-		"exclude": [
-			"**/*.d.ts",
-			"**/coverage/**/*.*",
-			"**/testData/**/*.*"
-		],
-		"extension": [
-			".ts"
-		],
-		"reporter": "html"
+	"bugs": {
+		"url": "https://github.com/CodeEditorLand/Foundation/issues"
 	},
 	"dependencies": {
 		"@types/source-map": "^0.1.27",
@@ -57,6 +20,7 @@
 		"vscode-uri": "^2.0.2",
 		"ws": "^6.0.0"
 	},
+	"description": "A library for building VS Code debug adapters for targets that support the Chrome Remote Debug Protocol",
 	"devDependencies": {
 		"@types/color": "^3.0.0",
 		"@types/glob": "^5.0.35",
@@ -83,10 +47,46 @@
 		"tslint-microsoft-contrib": "^5.0.3",
 		"typemoq": "^2.1.0",
 		"typescript": "^2.7.2",
-		"typescript-esbuild": "0.4.5",
+		"typescript-esbuild": "",
 		"vscode-nls-dev": "^3.3.2"
 	},
+	"displayName": "vscode-chrome-debug-core",
+	"homepage": "https://github.com/CodeEditorLand/Foundation#readme",
+	"license": "SEE LICENSE IN LICENSE",
+	"main": "./out/src/index",
+	"name": "vscode-chrome-debug-core",
+	"nyc": {
+		"all": true,
+		"exclude": [
+			"**/*.d.ts",
+			"**/coverage/**/*.*",
+			"**/testData/**/*.*"
+		],
+		"extension": [
+			".ts"
+		],
+		"reporter": "html"
+	},
+	"private": false,
 	"publishConfig": {
 		"access": "public"
-	}
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/CodeEditorLand/Foundation.git"
+	},
+	"scripts": {
+		"build": "gulp build",
+		"major": "npm version major -m '%s'",
+		"minor": "npm version minor -m '%s'",
+		"patch": "npm version patch -m '%s'",
+		"prepare": "gulp build",
+		"prepublishOnly": "TypeScriptESBuild 'Source/**/*.ts'",
+		"testCoverage": "nyc mocha --require source-map-support/register  --exit --recursive -u tdd ./out/test/**/*.test.js",
+		"tslint": "gulp tslint",
+		"watch": "gulp watch"
+	},
+	"type": "module",
+	"typings": "./lib/src/index.d.ts",
+	"version": "0.0.1"
 }
