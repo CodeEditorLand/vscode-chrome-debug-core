@@ -3,36 +3,36 @@
 	"version": "0.0.1",
 	"private": false,
 	"description": "Tools for tests that use vscode-debugadapter-testsupport and vscode-chrome-debug-core",
-	"homepage": "https://github.com/CodeEditorLand/Foundation#readme",
+	"keywords": [
+		"land"
+	],
+	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/LandChromeDebugCore#readme",
 	"bugs": {
-		"url": "https://github.com/CodeEditorLand/Foundation/issues"
+		"url": "HTTPS://GitHub.Com/CodeEditorLand/LandChromeDebugCore/issues"
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/CodeEditorLand/Foundation.git"
+		"url": "git+HTTPS://github.com/CodeEditorLand/LandChromeDebugCore.git"
 	},
 	"license": "SEE LICENSE IN LICENSE",
 	"author": {
-		"name": "Playform",
-		"email": "Hello@Playform.Cloud",
-		"url": "https://playform.cloud"
+		"name": "🌆 — Land —",
+		"email": "Land@PlayForm.Cloud",
+		"url": "HTTPS://Land.PlayForm.Cloud"
 	},
 	"type": "module",
 	"main": "out/index.js",
 	"typings": "out/index.d.ts",
 	"scripts": {
+		"Document": "Document 'Source/**/*.ts'",
 		"build": "tsc -w",
-		"prepublishOnly": "TypeScriptESBuild 'Source/**/*.ts'"
+		"prepublishOnly": "Build 'Source/**/*.ts'"
 	},
-	"dependencies": {
-		"vscode-debugadapter-testsupport": "^1.35.0"
-	},
+	"dependencies": {},
 	"devDependencies": {
-		"@types/node": "^7.0.8",
-		"typescript": "^2.4.2",
-		"typescript-esbuild": "0.4.5",
-		"vscode-chrome-debug-core": "^6.7.52",
-		"vscode-debugprotocol": "^1.32.0"
+		"@playform/build": "0.0.7",
+		"@playform/document": "0.0.6",
+		"@types/node": "20.12.7"
 	},
 	"publishConfig": {
 		"access": "public"
