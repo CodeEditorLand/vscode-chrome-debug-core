@@ -49,7 +49,7 @@
 	"dependencies": {
 		"@types/source-map": "0.5.2",
 		"color": "4.2.3",
-		"devtools-protocol": "0.0.1294763",
+		"devtools-protocol": "0.0.1295939",
 		"glob": "10.3.12",
 		"noice-json-rpc": "1.2.0",
 		"source-map": "0.7.4",
@@ -62,7 +62,7 @@
 		"@types/glob": "8.1.0",
 		"@types/minimatch": "5.1.2",
 		"@types/mockery": "1.4.33",
-		"@types/node": "20.12.7",
+		"@types/node": "20.12.10",
 		"@types/ws": "8.5.10",
 		"del": "7.1.0",
 		"event-stream": "4.0.1",
