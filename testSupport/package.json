@@ -1,26 +1,6 @@
 {
 	"name": "vscode-chrome-debug-core-testsupport",
-	"version": "0.0.1",
-	"private": false,
 	"description": "Tools for tests that use vscode-debugadapter-testsupport and vscode-chrome-debug-core",
-	"keywords": [
-		"land"
-	],
-	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/LandChromeDebugCore#readme",
-	"bugs": {
-		"url": "HTTPS://GitHub.Com/CodeEditorLand/LandChromeDebugCore/issues"
-	},
-	"repository": {
-		"type": "git",
-		"url": "git+HTTPS://github.com/CodeEditorLand/LandChromeDebugCore.git"
-	},
-	"license": "SEE LICENSE IN LICENSE",
-	"author": {
-		"name": "🛬 Land —",
-		"email": "Land@PlayForm.Cloud",
-		"url": "HTTPS://Land.PlayForm.Cloud"
-	},
-	"type": "module",
 	"main": "out/index.js",
 	"typings": "out/index.d.ts",
 	"scripts": {
@@ -31,10 +11,6 @@
 	"dependencies": {},
 	"devDependencies": {
 		"@playform/build": "0.0.7",
-		"@playform/document": "0.0.6",
 		"@types/node": "20.12.10"
-	},
-	"publishConfig": {
-		"access": "public"
 	}
 }

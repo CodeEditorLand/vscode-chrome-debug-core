@@ -1,27 +1,7 @@
 {
 	"name": "vscode-chrome-debug-core",
 	"displayName": "vscode-chrome-debug-core",
-	"version": "0.0.1",
-	"private": false,
 	"description": "A library for building VS Code debug adapters for targets that support the Chrome Remote Debug Protocol",
-	"keywords": [
-		"land"
-	],
-	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/LandChromeDebugCore#readme",
-	"bugs": {
-		"url": "HTTPS://GitHub.Com/CodeEditorLand/LandChromeDebugCore/issues"
-	},
-	"repository": {
-		"type": "git",
-		"url": "git+HTTPS://github.com/CodeEditorLand/LandChromeDebugCore.git"
-	},
-	"license": "SEE LICENSE IN LICENSE",
-	"author": {
-		"name": "🛬 Land —",
-		"email": "Land@PlayForm.Cloud",
-		"url": "HTTPS://Land.PlayForm.Cloud"
-	},
-	"type": "module",
 	"main": "./out/src/index",
 	"typings": "./lib/src/index.d.ts",
 	"scripts": {
@@ -57,7 +37,6 @@
 	},
 	"devDependencies": {
 		"@playform/build": "0.0.7",
-		"@playform/document": "0.0.6",
 		"@types/color": "3.0.6",
 		"@types/glob": "8.1.0",
 		"@types/minimatch": "5.1.2",
@@ -72,8 +51,5 @@
 		"nyc": "15.1.0",
 		"source-map-support": "0.5.21",
 		"typemoq": "2.1.0"
-	},
-	"publishConfig": {
-		"access": "public"
 	}
 }
