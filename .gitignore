@@ -1,9 +1,7 @@
-.DS_Store
 /out/
 /testSupport/out/
 lib/
 typings/
-npm-debug.log
 .nvmrc
 coverage/
 .nyc_output/
