@@ -13,9 +13,9 @@
     "vscode-debugadapter-testsupport": "^1.35.0"
   },
   "devDependencies": {
-    "@types/node": "^7.0.8",
-    "typescript": "^2.4.2",
-    "vscode-chrome-debug-core": "^6.7.52",
+    "@types/node": "^20.14.5",
+    "typescript": "^5.4.5",
+    "vscode-chrome-debug-core": "^6.8.11",
     "vscode-debugprotocol": "^1.32.0"
   }
 }
