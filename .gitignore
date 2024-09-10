@@ -1,0 +1,10 @@
+.DS_Store
+node_modules/
+/out/
+/testSupport/out/
+lib/
+typings/
+npm-debug.log
+.nvmrc
+coverage/
+.nyc_output/

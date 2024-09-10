@@ -1,0 +1,15 @@
+.github/
+.vscode/
+src/
+test/
+out/test
+typings/
+testSupport/
+
+.travis.yml
+appveyor.yml
+gulpfile.js
+STYLE.md
+tsconfig.json
+tslint.json
+typings.json
