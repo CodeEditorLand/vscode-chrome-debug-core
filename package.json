@@ -38,7 +38,7 @@
 		"@types/glob": "8.1.0",
 		"@types/minimatch": "5.1.2",
 		"@types/mockery": "1.4.33",
-		"@types/node": "22.7.2",
+		"@types/node": "22.7.3",
 		"@types/ws": "8.5.12",
 		"del": "7.1.0",
 		"event-stream": "4.0.1",
