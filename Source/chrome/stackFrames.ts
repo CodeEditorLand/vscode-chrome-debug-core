@@ -2,315 +2,460 @@
  * Copyright (C) Microsoft Corporation. All rights reserved.
  *--------------------------------------------------------*/
 
-import { DebugProtocol } from 'vscode-debugprotocol';
-import { Handles } from 'vscode-debugadapter';
-import { IStackTraceResponseBody,
-    IInternalStackTraceResponseBody } from '../debugAdapterInterfaces';
-import { Protocol as Crdp } from 'devtools-protocol';
-import { Transformers } from './chromeDebugAdapter';
-import { ScriptContainer } from './scripts';
-import { SmartStepper } from './smartStep';
-import { ScriptSkipper } from './scriptSkipping';
+import * as path from "path";
+import { Protocol as Crdp } from "devtools-protocol";
+import { Handles } from "vscode-debugadapter";
+import { DebugProtocol } from "vscode-debugprotocol";
+import * as nls from "vscode-nls";
 
-import * as ChromeUtils from './chromeUtils';
-import * as utils from '../utils';
-import * as path from 'path';
-import * as nls from 'vscode-nls';
-import * as errors from '../errors';
-import { VariablesManager } from './variablesManager';
-import { ScopeContainer, ExceptionContainer } from './variables';
+import {
+	IInternalStackTraceResponseBody,
+	IStackTraceResponseBody,
+} from "../debugAdapterInterfaces";
+import * as errors from "../errors";
+import * as utils from "../utils";
+import { Transformers } from "./chromeDebugAdapter";
+import * as ChromeUtils from "./chromeUtils";
+import { ScriptContainer } from "./scripts";
+import { ScriptSkipper } from "./scriptSkipping";
+import { SmartStepper } from "./smartStep";
+import { ExceptionContainer, ScopeContainer } from "./variables";
+import { VariablesManager } from "./variablesManager";
 
 let localize = nls.loadMessageBundle();
 
 export class StackFrames {
+	private _frameHandles = new Handles<Crdp.Debugger.CallFrame>();
 
-    private _frameHandles = new Handles<Crdp.Debugger.CallFrame>();
+	constructor() {}
 
-    constructor() {}
+	/**
+	 * Clear the currently stored stack frames
+	 */
+	reset() {
+		this._frameHandles.reset();
+	}
 
-    /**
-     * Clear the currently stored stack frames
-     */
-    reset() {
-        this._frameHandles.reset();
-    }
+	/**
+	 * Get a stack frame by its id
+	 */
+	getFrame(frameId: number) {
+		return this._frameHandles.get(frameId);
+	}
 
-    /**
-     * Get a stack frame by its id
-     */
-    getFrame(frameId: number) {
-        return this._frameHandles.get(frameId);
-    }
+	public async getStackTrace({
+		args,
+		scripts,
+		originProvider,
+		scriptSkipper,
+		smartStepper,
+		transformers,
+		pauseEvent,
+	}: {
+		args: DebugProtocol.StackTraceArguments;
+		scripts: ScriptContainer;
+		originProvider: (url: string) => string;
+		scriptSkipper: ScriptSkipper;
+		smartStepper: SmartStepper;
+		transformers: Transformers;
+		pauseEvent: Crdp.Debugger.PausedEvent;
+	}): Promise<IStackTraceResponseBody> {
+		let stackFrames = pauseEvent.callFrames
+			.map((frame) =>
+				this.callFrameToStackFrame(frame, scripts, originProvider),
+			)
+			.concat(
+				this.asyncFrames(
+					pauseEvent.asyncStackTrace,
+					scripts,
+					originProvider,
+				),
+			);
 
-    public async getStackTrace({ args, scripts, originProvider, scriptSkipper, smartStepper, transformers, pauseEvent }:
-                { args: DebugProtocol.StackTraceArguments;
-                  scripts: ScriptContainer;
-                  originProvider: (url: string) => string;
-                  scriptSkipper: ScriptSkipper;
-                  smartStepper: SmartStepper;
-                  transformers: Transformers;
-                  pauseEvent: Crdp.Debugger.PausedEvent; }): Promise<IStackTraceResponseBody> {
+		const totalFrames = stackFrames.length;
+		if (typeof args.startFrame === "number") {
+			stackFrames = stackFrames.slice(args.startFrame);
+		}
 
-        let stackFrames = pauseEvent.callFrames.map(frame => this.callFrameToStackFrame(frame, scripts, originProvider))
-            .concat(this.asyncFrames(pauseEvent.asyncStackTrace, scripts, originProvider));
+		if (typeof args.levels === "number") {
+			stackFrames = stackFrames.slice(0, args.levels);
+		}
 
-        const totalFrames = stackFrames.length;
-        if (typeof args.startFrame === 'number') {
-            stackFrames = stackFrames.slice(args.startFrame);
-        }
+		const stackTraceResponse: IInternalStackTraceResponseBody = {
+			stackFrames,
+			totalFrames,
+		};
+		await transformers.pathTransformer.stackTraceResponse(
+			stackTraceResponse,
+		);
+		await transformers.sourceMapTransformer.stackTraceResponse(
+			stackTraceResponse,
+		);
 
-        if (typeof args.levels === 'number') {
-            stackFrames = stackFrames.slice(0, args.levels);
-        }
+		await Promise.all(
+			stackTraceResponse.stackFrames.map(async (frame) => {
+				// Remove isSourceMapped to convert back to DebugProtocol.StackFrame
+				const isSourceMapped = frame.isSourceMapped;
+				delete frame.isSourceMapped;
 
-        const stackTraceResponse: IInternalStackTraceResponseBody = {
-            stackFrames,
-            totalFrames
-        };
-        await transformers.pathTransformer.stackTraceResponse(stackTraceResponse);
-        await transformers.sourceMapTransformer.stackTraceResponse(stackTraceResponse);
+				if (!frame.source) {
+					return;
+				}
 
-        await Promise.all(stackTraceResponse.stackFrames.map(async (frame) => {
-            // Remove isSourceMapped to convert back to DebugProtocol.StackFrame
-            const isSourceMapped = frame.isSourceMapped;
-            delete frame.isSourceMapped;
+				// Apply hints to skipped frames
+				const getSkipReason = (reason) =>
+					localize("skipReason", "(skipped by '{0}')", reason);
+				if (
+					frame.source.path &&
+					scriptSkipper.shouldSkipSource(frame.source.path)
+				) {
+					frame.source.origin =
+						(frame.source.origin ? frame.source.origin + " " : "") +
+						getSkipReason("skipFiles");
+					frame.source.presentationHint = "deemphasize";
+				} else if (
+					!isSourceMapped &&
+					(await smartStepper.shouldSmartStep(
+						frame,
+						transformers.pathTransformer,
+						transformers.sourceMapTransformer,
+					))
+				) {
+					// TODO !isSourceMapped is a bit of a hack here
+					frame.source.origin =
+						(frame.source.origin ? frame.source.origin + " " : "") +
+						getSkipReason("smartStep");
+					(<any>frame).presentationHint = "deemphasize";
+				}
 
-            if (!frame.source) {
-                return;
-            }
+				// Allow consumer to adjust final path
+				if (frame.source.path && frame.source.sourceReference) {
+					frame.source.path = scripts.realPathToDisplayPath(
+						frame.source.path,
+					);
+				}
 
-            // Apply hints to skipped frames
-            const getSkipReason = reason => localize('skipReason', "(skipped by '{0}')", reason);
-            if (frame.source.path && scriptSkipper.shouldSkipSource(frame.source.path)) {
-                frame.source.origin = (frame.source.origin ? frame.source.origin + ' ' : '') + getSkipReason('skipFiles');
-                frame.source.presentationHint = 'deemphasize';
-            } else if (!isSourceMapped && await smartStepper.shouldSmartStep(frame, transformers.pathTransformer, transformers.sourceMapTransformer)) {
-                // TODO !isSourceMapped is a bit of a hack here
-                frame.source.origin = (frame.source.origin ? frame.source.origin + ' ' : '') + getSkipReason('smartStep');
-                (<any>frame).presentationHint = 'deemphasize';
-            }
+				// And finally, remove the fake eval path and fix the name, if it was never resolved to a real path
+				if (
+					frame.source.path &&
+					ChromeUtils.isEvalScript(frame.source.path)
+				) {
+					frame.source.path = undefined;
+					frame.source.name = scripts.displayNameForSourceReference(
+						frame.source.sourceReference,
+					);
+				}
+			}),
+		);
 
-            // Allow consumer to adjust final path
-            if (frame.source.path && frame.source.sourceReference) {
-                frame.source.path = scripts.realPathToDisplayPath(frame.source.path);
-            }
+		transformers.lineColTransformer.stackTraceResponse(stackTraceResponse);
+		stackTraceResponse.stackFrames.forEach(
+			(frame) =>
+				(frame.name = this.formatStackFrameName(frame, args.format)),
+		);
 
-            // And finally, remove the fake eval path and fix the name, if it was never resolved to a real path
-            if (frame.source.path && ChromeUtils.isEvalScript(frame.source.path)) {
-                frame.source.path = undefined;
-                frame.source.name = scripts.displayNameForSourceReference(frame.source.sourceReference);
-            }
-        }));
+		return stackTraceResponse;
+	}
 
-        transformers.lineColTransformer.stackTraceResponse(stackTraceResponse);
-        stackTraceResponse.stackFrames.forEach(frame => frame.name = this.formatStackFrameName(frame, args.format));
+	getScopes({
+		args,
+		scripts,
+		transformers,
+		variables,
+		pauseEvent,
+		currentException,
+	}: {
+		args: DebugProtocol.ScopesArguments;
+		scripts: ScriptContainer;
+		transformers: Transformers;
+		variables: VariablesManager;
+		pauseEvent: Crdp.Debugger.PausedEvent;
+		currentException: any;
+	}): { scopes: DebugProtocol.Scope[] } {
+		const currentFrame = this._frameHandles.get(args.frameId);
+		if (
+			!currentFrame ||
+			!currentFrame.location ||
+			!currentFrame.callFrameId
+		) {
+			throw errors.stackFrameNotValid();
+		}
 
-        return stackTraceResponse;
-    }
+		if (!currentFrame.callFrameId) {
+			return { scopes: [] };
+		}
 
-    getScopes({ args, scripts, transformers, variables, pauseEvent, currentException }:
-              { args: DebugProtocol.ScopesArguments;
-                scripts: ScriptContainer;
-                transformers: Transformers;
-                variables: VariablesManager;
-                pauseEvent: Crdp.Debugger.PausedEvent;
-                currentException: any; }): { scopes: DebugProtocol.Scope[]; } {
-        const currentFrame = this._frameHandles.get(args.frameId);
-        if (!currentFrame || !currentFrame.location || !currentFrame.callFrameId) {
-            throw errors.stackFrameNotValid();
-        }
+		const currentScript = scripts.getScriptById(
+			currentFrame.location.scriptId,
+		);
+		const currentScriptUrl = currentScript && currentScript.url;
+		const currentScriptPath =
+			(currentScriptUrl &&
+				transformers.pathTransformer.getClientPathFromTargetPath(
+					currentScriptUrl,
+				)) ||
+			currentScriptUrl;
 
-        if (!currentFrame.callFrameId) {
-            return { scopes: [] };
-        }
+		const scopes = currentFrame.scopeChain.map(
+			(scope: Crdp.Debugger.Scope, i: number) => {
+				// The first scope should include 'this'. Keep the RemoteObject reference for use by the variables request
+				const thisObj = i === 0 && currentFrame.this;
+				const returnValue = i === 0 && currentFrame.returnValue;
+				const variablesReference = variables.createHandle(
+					new ScopeContainer(
+						currentFrame.callFrameId,
+						i,
+						scope.object.objectId,
+						thisObj,
+						returnValue,
+					),
+				);
 
-        const currentScript = scripts.getScriptById(currentFrame.location.scriptId);
-        const currentScriptUrl = currentScript && currentScript.url;
-        const currentScriptPath = (currentScriptUrl && transformers.pathTransformer.getClientPathFromTargetPath(currentScriptUrl)) || currentScriptUrl;
+				const resultScope = <DebugProtocol.Scope>{
+					name:
+						scope.type.substr(0, 1).toUpperCase() +
+						scope.type.substr(1), // Take Chrome's scope, uppercase the first letter
+					variablesReference,
+					expensive: scope.type === "global",
+				};
 
-        const scopes = currentFrame.scopeChain.map((scope: Crdp.Debugger.Scope, i: number) => {
-            // The first scope should include 'this'. Keep the RemoteObject reference for use by the variables request
-            const thisObj = i === 0 && currentFrame.this;
-            const returnValue = i === 0 && currentFrame.returnValue;
-            const variablesReference = variables.createHandle(
-                new ScopeContainer(currentFrame.callFrameId, i, scope.object.objectId, thisObj, returnValue));
+				if (scope.startLocation && scope.endLocation) {
+					resultScope.column = scope.startLocation.columnNumber;
+					resultScope.line = scope.startLocation.lineNumber;
+					resultScope.endColumn = scope.endLocation.columnNumber;
+					resultScope.endLine = scope.endLocation.lineNumber;
+				}
 
-            const resultScope = <DebugProtocol.Scope>{
-                name: scope.type.substr(0, 1).toUpperCase() + scope.type.substr(1), // Take Chrome's scope, uppercase the first letter
-                variablesReference,
-                expensive: scope.type === 'global'
-            };
+				return resultScope;
+			},
+		);
 
-            if (scope.startLocation && scope.endLocation) {
-                resultScope.column = scope.startLocation.columnNumber;
-                resultScope.line = scope.startLocation.lineNumber;
-                resultScope.endColumn = scope.endLocation.columnNumber;
-                resultScope.endLine = scope.endLocation.lineNumber;
-            }
+		if (
+			currentException &&
+			this.lookupFrameIndex(args.frameId, pauseEvent) === 0
+		) {
+			scopes.unshift(<DebugProtocol.Scope>{
+				name: localize("scope.exception", "Exception"),
+				variablesReference: variables.createHandle(
+					ExceptionContainer.create(currentException),
+				),
+			});
+		}
 
-            return resultScope;
-        });
+		const scopesResponse = { scopes };
+		if (currentScriptPath) {
+			transformers.sourceMapTransformer.scopesResponse(
+				currentScriptPath,
+				scopesResponse,
+			);
+			transformers.lineColTransformer.scopeResponse(scopesResponse);
+		}
 
-        if (currentException && this.lookupFrameIndex(args.frameId, pauseEvent) === 0) {
-            scopes.unshift(<DebugProtocol.Scope>{
-                name: localize('scope.exception', 'Exception'),
-                variablesReference: variables.createHandle(ExceptionContainer.create(currentException))
-            });
-        }
+		return scopesResponse;
+	}
 
-        const scopesResponse = { scopes };
-        if (currentScriptPath) {
-            transformers.sourceMapTransformer.scopesResponse(currentScriptPath, scopesResponse);
-            transformers.lineColTransformer.scopeResponse(scopesResponse);
-        }
+	public async mapCallFrame(
+		frame: Crdp.Runtime.CallFrame,
+		transformers: Transformers,
+		scripts: ScriptContainer,
+		originProvider: (url: string) => string,
+	): Promise<DebugProtocol.StackFrame> {
+		const debuggerCF = this.runtimeCFToDebuggerCF(frame);
+		const stackFrame = this.callFrameToStackFrame(
+			debuggerCF,
+			scripts,
+			originProvider,
+		);
+		await transformers.pathTransformer.fixSource(stackFrame.source);
+		await transformers.sourceMapTransformer.fixSourceLocation(stackFrame);
+		transformers.lineColTransformer.convertDebuggerLocationToClient(
+			stackFrame,
+		);
+		return stackFrame;
+	}
 
-        return scopesResponse;
-    }
+	// We parse stack trace from `formattedException`, source map it and return a new string
+	public async mapFormattedException(
+		formattedException: string,
+		transformers: Transformers,
+	): Promise<string> {
+		const exceptionLines = formattedException.split(/\r?\n/);
 
-    public async mapCallFrame(frame: Crdp.Runtime.CallFrame, transformers: Transformers, scripts: ScriptContainer, originProvider: (url: string) => string ): Promise<DebugProtocol.StackFrame> {
-        const debuggerCF = this.runtimeCFToDebuggerCF(frame);
-        const stackFrame = this.callFrameToStackFrame(debuggerCF, scripts, originProvider);
-        await transformers.pathTransformer.fixSource(stackFrame.source);
-        await transformers.sourceMapTransformer.fixSourceLocation(stackFrame);
-        transformers.lineColTransformer.convertDebuggerLocationToClient(stackFrame);
-        return stackFrame;
-    }
+		for (let i = 0, len = exceptionLines.length; i < len; ++i) {
+			const line = exceptionLines[i];
+			const matches = line.match(
+				/^\s+at (.*?)\s*\(?([^ ]+):(\d+):(\d+)\)?$/,
+			);
 
-    // We parse stack trace from `formattedException`, source map it and return a new string
-    public async mapFormattedException(formattedException: string, transformers: Transformers): Promise<string> {
-        const exceptionLines = formattedException.split(/\r?\n/);
+			if (!matches) continue;
+			const linePath = matches[2];
+			const lineNum = parseInt(matches[3], 10);
+			const adjustedLineNum = lineNum - 1;
+			const columnNum = parseInt(matches[4], 10);
+			const clientPath =
+				transformers.pathTransformer.getClientPathFromTargetPath(
+					linePath,
+				);
+			const mapped =
+				await transformers.sourceMapTransformer.mapToAuthored(
+					clientPath || linePath,
+					adjustedLineNum,
+					columnNum,
+				);
 
-        for (let i = 0, len = exceptionLines.length; i < len; ++i) {
-            const line = exceptionLines[i];
-            const matches = line.match(/^\s+at (.*?)\s*\(?([^ ]+):(\d+):(\d+)\)?$/);
+			if (
+				mapped &&
+				mapped.source &&
+				utils.isNumber(mapped.line) &&
+				utils.isNumber(mapped.column) &&
+				utils.existsSync(mapped.source)
+			) {
+				transformers.lineColTransformer.mappedExceptionStack(mapped);
+				exceptionLines[i] = exceptionLines[i].replace(
+					`${linePath}:${lineNum}:${columnNum}`,
+					`${mapped.source}:${mapped.line}:${mapped.column}`,
+				);
+			} else if (clientPath && clientPath !== linePath) {
+				const location = { line: adjustedLineNum, column: columnNum };
+				transformers.lineColTransformer.mappedExceptionStack(location);
+				exceptionLines[i] = exceptionLines[i].replace(
+					`${linePath}:${lineNum}:${columnNum}`,
+					`${clientPath}:${location.line}:${location.column}`,
+				);
+			}
+		}
 
-            if (!matches) continue;
-            const linePath = matches[2];
-            const lineNum = parseInt(matches[3], 10);
-            const adjustedLineNum = lineNum - 1;
-            const columnNum = parseInt(matches[4], 10);
-            const clientPath = transformers.pathTransformer.getClientPathFromTargetPath(linePath);
-            const mapped = await transformers.sourceMapTransformer.mapToAuthored(clientPath || linePath, adjustedLineNum, columnNum);
+		return exceptionLines.join("\n");
+	}
 
-            if (mapped && mapped.source && utils.isNumber(mapped.line) && utils.isNumber(mapped.column) && utils.existsSync(mapped.source)) {
-                transformers.lineColTransformer.mappedExceptionStack(mapped);
-                exceptionLines[i] = exceptionLines[i].replace(
-                    `${linePath}:${lineNum}:${columnNum}`,
-                    `${mapped.source}:${mapped.line}:${mapped.column}`);
-            } else if (clientPath && clientPath !== linePath) {
-                const location = { line: adjustedLineNum, column: columnNum };
-                transformers.lineColTransformer.mappedExceptionStack(location);
-                exceptionLines[i] = exceptionLines[i].replace(
-                    `${linePath}:${lineNum}:${columnNum}`,
-                    `${clientPath}:${location.line}:${location.column}`);
-            }
-        }
+	private asyncFrames(
+		stackTrace: Crdp.Runtime.StackTrace,
+		scripts: ScriptContainer,
+		originProvider: (url: string) => string,
+	): DebugProtocol.StackFrame[] {
+		if (stackTrace) {
+			const frames = stackTrace.callFrames
+				.map((frame) => this.runtimeCFToDebuggerCF(frame))
+				.map((frame) =>
+					this.callFrameToStackFrame(frame, scripts, originProvider),
+				);
 
-        return exceptionLines.join('\n');
-    }
+			frames.unshift({
+				id: this._frameHandles.create(null),
+				name: `[ ${stackTrace.description} ]`,
+				source: undefined,
+				line: undefined,
+				column: undefined,
+				presentationHint: "label",
+			});
 
-    private asyncFrames(stackTrace: Crdp.Runtime.StackTrace, scripts: ScriptContainer, originProvider: (url: string) => string): DebugProtocol.StackFrame[] {
-        if (stackTrace) {
-            const frames = stackTrace.callFrames
-                .map(frame => this.runtimeCFToDebuggerCF(frame))
-                .map(frame => this.callFrameToStackFrame(frame, scripts, originProvider));
+			return frames.concat(
+				this.asyncFrames(stackTrace.parent, scripts, originProvider),
+			);
+		} else {
+			return [];
+		}
+	}
 
-            frames.unshift({
-                id: this._frameHandles.create(null),
-                name: `[ ${stackTrace.description} ]`,
-                source: undefined,
-                line: undefined,
-                column: undefined,
-                presentationHint: 'label'
-            });
+	private runtimeCFToDebuggerCF(
+		frame: Crdp.Runtime.CallFrame,
+	): Crdp.Debugger.CallFrame {
+		return {
+			callFrameId: undefined,
+			scopeChain: undefined,
+			this: undefined,
+			location: {
+				lineNumber: frame.lineNumber,
+				columnNumber: frame.columnNumber,
+				scriptId: frame.scriptId,
+			},
+			url: frame.url,
+			functionName: frame.functionName,
+		};
+	}
 
-            return frames.concat(this.asyncFrames(stackTrace.parent, scripts, originProvider));
-        } else {
-            return [];
-        }
-    }
+	private formatStackFrameName(
+		frame: DebugProtocol.StackFrame,
+		formatArgs?: DebugProtocol.StackFrameFormat,
+	): string {
+		let formattedName = frame.name;
 
-    private runtimeCFToDebuggerCF(frame: Crdp.Runtime.CallFrame): Crdp.Debugger.CallFrame {
-        return {
-            callFrameId: undefined,
-            scopeChain: undefined,
-            this: undefined,
-            location: {
-                lineNumber: frame.lineNumber,
-                columnNumber: frame.columnNumber,
-                scriptId: frame.scriptId
-            },
-            url: frame.url,
-            functionName: frame.functionName
-        };
-    }
+		if (frame.source && formatArgs) {
+			if (formatArgs.module) {
+				formattedName += ` [${frame.source.name}]`;
+			}
 
-    private formatStackFrameName(frame: DebugProtocol.StackFrame, formatArgs?: DebugProtocol.StackFrameFormat): string {
-        let formattedName = frame.name;
+			if (formatArgs.line) {
+				formattedName += ` Line ${frame.line}`;
+			}
+		}
 
-        if (frame.source && formatArgs) {
-            if (formatArgs.module) {
-                formattedName += ` [${frame.source.name}]`;
-            }
+		return formattedName;
+	}
 
-            if (formatArgs.line) {
-                formattedName += ` Line ${frame.line}`;
-            }
-        }
+	public callFrameToStackFrame(
+		frame: Crdp.Debugger.CallFrame,
+		scripts: ScriptContainer,
+		originProvider: (url: string) => string,
+	): DebugProtocol.StackFrame {
+		const { location, functionName } = frame;
+		const line = location.lineNumber;
+		const column = location.columnNumber;
+		const script = scripts.getScriptById(location.scriptId);
 
-        return formattedName;
-    }
+		try {
+			// When the script has a url and isn't one we're ignoring, send the name and path fields. PathTransformer will
+			// attempt to resolve it to a script in the workspace. Otherwise, send the name and sourceReference fields.
+			const sourceReference = scripts.getSourceReferenceForScriptId(
+				script.scriptId,
+			);
+			const source: DebugProtocol.Source = {
+				name: path.basename(script.url),
+				path: script.url,
+				sourceReference,
+				origin: originProvider(script.url),
+			};
 
-    public callFrameToStackFrame(frame: Crdp.Debugger.CallFrame, scripts: ScriptContainer, originProvider: (url: string) => string): DebugProtocol.StackFrame {
-        const { location, functionName } = frame;
-        const line = location.lineNumber;
-        const column = location.columnNumber;
-        const script = scripts.getScriptById(location.scriptId);
+			// If the frame doesn't have a function name, it's either an anonymous function
+			// or eval script. If its source has a name, it's probably an anonymous function.
+			const frameName =
+				functionName ||
+				(script.url ? "(anonymous function)" : "(eval code)");
+			return {
+				id: this._frameHandles.create(frame),
+				name: frameName,
+				source,
+				line,
+				column,
+			};
+		} catch (e) {
+			// Some targets such as the iOS simulator behave badly and return nonsense callFrames.
+			// In these cases, return a dummy stack frame
+			const evalUnknown = `${ChromeUtils.EVAL_NAME_PREFIX}_Unknown`;
+			return {
+				id: this._frameHandles.create(<any>{}),
+				name: evalUnknown,
+				source: { name: evalUnknown, path: evalUnknown },
+				line,
+				column,
+			};
+		}
+	}
 
-        try {
-            // When the script has a url and isn't one we're ignoring, send the name and path fields. PathTransformer will
-            // attempt to resolve it to a script in the workspace. Otherwise, send the name and sourceReference fields.
-            const sourceReference = scripts.getSourceReferenceForScriptId(script.scriptId);
-            const source: DebugProtocol.Source = {
-                name: path.basename(script.url),
-                path: script.url,
-                sourceReference,
-                origin: originProvider(script.url)
-            };
+	/**
+	 * Try to lookup the index of the frame with given ID. Returns -1 for async frames and unknown frames.
+	 */
+	public lookupFrameIndex(
+		frameId: number,
+		pauseEvent: Crdp.Debugger.PausedEvent,
+	): number {
+		const currentFrame = this._frameHandles.get(frameId);
+		if (!currentFrame || !currentFrame.callFrameId || !pauseEvent) {
+			return -1;
+		}
 
-            // If the frame doesn't have a function name, it's either an anonymous function
-            // or eval script. If its source has a name, it's probably an anonymous function.
-            const frameName = functionName || (script.url ? '(anonymous function)' : '(eval code)');
-            return {
-                id: this._frameHandles.create(frame),
-                name: frameName,
-                source,
-                line,
-                column
-            };
-        } catch (e) {
-            // Some targets such as the iOS simulator behave badly and return nonsense callFrames.
-            // In these cases, return a dummy stack frame
-            const evalUnknown = `${ChromeUtils.EVAL_NAME_PREFIX}_Unknown`;
-            return {
-                id: this._frameHandles.create(<any>{ }),
-                name: evalUnknown,
-                source: { name: evalUnknown, path: evalUnknown },
-                line,
-                column
-            };
-        }
-    }
-
-    /**
-     * Try to lookup the index of the frame with given ID. Returns -1 for async frames and unknown frames.
-     */
-    public lookupFrameIndex(frameId: number, pauseEvent: Crdp.Debugger.PausedEvent): number {
-        const currentFrame = this._frameHandles.get(frameId);
-        if (!currentFrame || !currentFrame.callFrameId || !pauseEvent) {
-            return -1;
-        }
-
-        return pauseEvent.callFrames.findIndex(frame => frame.callFrameId === currentFrame.callFrameId);
-    }
+		return pauseEvent.callFrames.findIndex(
+			(frame) => frame.callFrameId === currentFrame.callFrameId,
+		);
+	}
 }

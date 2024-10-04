@@ -3,51 +3,53 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as mocha from 'mocha';
-import * as events from 'events';
+import * as events from "events";
+import * as mocha from "mocha";
 
 class LoggingReporter extends mocha.reporters.Spec {
-    static alwaysDumpLogs = false;
-    static logEE = new events.EventEmitter();
+	static alwaysDumpLogs = false;
+	static logEE = new events.EventEmitter();
 
-    private testLogs: string[];
-    private inTest = false;
+	private testLogs: string[];
+	private inTest = false;
 
-    constructor(runner: any) {
-        super(runner);
+	constructor(runner: any) {
+		super(runner);
 
-        LoggingReporter.logEE.on('log', msg => {
-            if (this.inTest) {
-                this.testLogs.push(msg);
-            }
-        });
+		LoggingReporter.logEE.on("log", (msg) => {
+			if (this.inTest) {
+				this.testLogs.push(msg);
+			}
+		});
 
-        runner.on('test', test => {
-            this.inTest = true;
-            this.testLogs = [];
-        });
+		runner.on("test", (test) => {
+			this.inTest = true;
+			this.testLogs = [];
+		});
 
-        runner.on('pass', test => {
-            this.inTest = false;
+		runner.on("pass", (test) => {
+			this.inTest = false;
 
-            if (LoggingReporter.alwaysDumpLogs) {
-                this.dumpLogs();
-            }
-        });
+			if (LoggingReporter.alwaysDumpLogs) {
+				this.dumpLogs();
+			}
+		});
 
-        runner.on('fail', test => {
-            this.inTest = false;
-            this.dumpLogs();
+		runner.on("fail", (test) => {
+			this.inTest = false;
+			this.dumpLogs();
 
-            console.log(new Date().toISOString().split(/[TZ]/)[1] + ' Finished');
-        });
-    }
+			console.log(
+				new Date().toISOString().split(/[TZ]/)[1] + " Finished",
+			);
+		});
+	}
 
-    private dumpLogs(): void {
-        this.testLogs.forEach(msg => {
-            console.log(msg);
-        });
-    }
+	private dumpLogs(): void {
+		this.testLogs.forEach((msg) => {
+			console.log(msg);
+		});
+	}
 }
 
 export = LoggingReporter;

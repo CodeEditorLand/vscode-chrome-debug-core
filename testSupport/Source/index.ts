@@ -3,18 +3,20 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import {ExtendedDebugClient, IExpectedStopLocation, THREAD_ID} from './debugClient';
-import * as debugClient from './debugClient';
-import {setup, teardown, ISetupOpts} from './testSetup';
+import {
+	ExtendedDebugClient,
+	IExpectedStopLocation,
+	THREAD_ID,
+} from "./debugClient";
+import * as debugClient from "./debugClient";
+import { ISetupOpts, setup, teardown } from "./testSetup";
 
 export {
-    ExtendedDebugClient,
-    IExpectedStopLocation,
-    THREAD_ID,
-
-    debugClient,
-
-    setup,
-    teardown,
-    ISetupOpts
+	ExtendedDebugClient,
+	IExpectedStopLocation,
+	THREAD_ID,
+	debugClient,
+	setup,
+	teardown,
+	ISetupOpts,
 };
