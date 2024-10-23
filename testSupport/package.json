@@ -2,7 +2,7 @@
 	"dependencies": {},
 	"description": "Tools for tests that use vscode-debugadapter-testsupport and vscode-chrome-debug-core",
 	"devDependencies": {
-		"@types/node": "22.7.7"
+		"@types/node": "22.7.9"
 	},
 	"main": "out/index.js",
 	"name": "vscode-chrome-debug-core-testsupport",
