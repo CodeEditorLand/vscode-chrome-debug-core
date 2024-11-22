@@ -34,6 +34,7 @@ export function getComputedSourceRoot(
 	generatedPath = utils.fileUrlToPath(generatedPath);
 
 	let absSourceRoot: string;
+
 	if (sourceRoot) {
 		if (sourceRoot.startsWith("file:///")) {
 			// sourceRoot points to a local path like "file:///c:/project/src", make it an absolute path
@@ -56,10 +57,12 @@ export function getComputedSourceRoot(
 		} else {
 			// generatedPath is a URL so runtime script is not on disk, resolve the sourceRoot location on disk.
 			const generatedUrlPath = url.parse(generatedPath).pathname;
+
 			const mappedPath = chromeUtils.applyPathMappingsToTargetUrlPath(
 				generatedUrlPath,
 				pathMapping,
 			);
+
 			const mappedDirname = path.dirname(mappedPath);
 			absSourceRoot = utils.properJoin(mappedDirname, sourceRoot);
 		}
@@ -80,6 +83,7 @@ export function getComputedSourceRoot(
 			urlPathname,
 			pathMapping,
 		);
+
 		const scriptPathDirname = mappedPath ? path.dirname(mappedPath) : "";
 		absSourceRoot = scriptPathDirname;
 		logger.log(
@@ -117,21 +121,26 @@ export function applySourceMapPathOverrides(
 	// Iterate the key/vals, only apply the first one that matches.
 	for (let leftPattern of sortedOverrideKeys) {
 		const rightPattern = sourceMapPathOverrides[leftPattern];
+
 		const entryStr = `"${leftPattern}": "${rightPattern}"`;
 
 		const asterisks = leftPattern.match(/\*/g) || [];
+
 		if (asterisks.length > 1) {
 			logger.log(
 				`Warning: only one asterisk allowed in a sourceMapPathOverrides entry - ${entryStr}`,
 			);
+
 			continue;
 		}
 
 		const replacePatternAsterisks = rightPattern.match(/\*/g) || [];
+
 		if (replacePatternAsterisks.length > asterisks.length) {
 			logger.log(
 				`Warning: the right side of a sourceMapPathOverrides entry must have 0 or 1 asterisks - ${entryStr}}`,
 			);
+
 			continue;
 		}
 
@@ -140,16 +149,21 @@ export function applySourceMapPathOverrides(
 			leftPattern,
 			"/*",
 		);
+
 		const leftRegexSegment = escapedLeftPattern
 			.replace(/\*/g, "(.*)")
 			.replace(/\\\\/g, "/");
+
 		const leftRegex = new RegExp(`^${leftRegexSegment}$`, "i");
+
 		const overridePatternMatches = forwardSlashSourcePath.match(leftRegex);
+
 		if (!overridePatternMatches) continue;
 
 		// Grab the value of the wildcard from the match above, replace the wildcard in the
 		// replacement pattern, and return the result.
 		const wildcardValue = overridePatternMatches[1];
+
 		let mappedPath = rightPattern.replace(/\*/g, wildcardValue);
 		mappedPath = utils.properJoin(mappedPath); // Fix any ..
 		if (
@@ -164,6 +178,7 @@ export function applySourceMapPathOverrides(
 					path.join("../ClientApp", wildcardValue),
 				),
 			);
+
 			if (utils.existsSync(pathFixingASPNETBug)) {
 				++aspNetFallbackCount;
 				mappedPath = pathFixingASPNETBug;
@@ -173,6 +188,7 @@ export function applySourceMapPathOverrides(
 		logger.log(
 			`SourceMap: mapping ${sourcePath} => ${mappedPath}, via sourceMapPathOverrides entry - ${entryStr}`,
 		);
+
 		return mappedPath;
 	}
 
@@ -187,7 +203,9 @@ export function resolveMapPath(
 	if (!utils.isURL(mapPath)) {
 		if (utils.isURL(pathToGenerated)) {
 			const scriptUrl = url.parse(pathToGenerated);
+
 			const scriptPath = scriptUrl.pathname;
+
 			if (!scriptPath) {
 				return null;
 			}

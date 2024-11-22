@@ -30,12 +30,14 @@ import { logger } from "vscode-debugadapter";
 
 function extractDomain(method: string): string {
 	const methodParts = method.split(".");
+
 	if (methodParts.length === 2) {
 		return methodParts[0];
 	} else {
 		throwCriticalError(
 			`The method ${method} didn't have exactly two parts`,
 		);
+
 		return "Unknown";
 	}
 }
@@ -53,6 +55,7 @@ function decodifyId(encodifiedId: number): number {
 
 function throwCriticalError(message: string): void {
 	logger.error("CRDP Multiplexor - CRITICAL-ERROR: " + message);
+
 	throw new Error(message);
 }
 
@@ -61,6 +64,7 @@ export class CRDPMultiplexor {
 
 	private onMessage(data: string): void {
 		const message = JSON.parse(data);
+
 		if (message.id !== undefined) {
 			this.onResponseMessage(message, data);
 		} else if (message.method) {
@@ -73,6 +77,7 @@ export class CRDPMultiplexor {
 	private onResponseMessage(message: { id: number }, data: string): void {
 		// The message is a response, so it should only go to the channel that requested this
 		const channel = this._channels[decodifyChannelId(message.id)];
+
 		if (channel) {
 			message.id = decodifyId(message.id);
 			data = JSON.stringify(message);
@@ -90,6 +95,7 @@ export class CRDPMultiplexor {
 	): void {
 		// The message is a notification, so it should go to all channels. The channels itself will filter based on the enabled domains
 		const domain = extractDomain(message.method);
+
 		for (const channel of this._channels) {
 			channel.callDomainMessageCallbacks(domain, data);
 		}
@@ -110,11 +116,13 @@ export class CRDPMultiplexor {
 			this,
 		);
 		this._channels.push(channel);
+
 		return channel;
 	}
 
 	public send(channel: CRDPChannel, data: string): void {
 		const message = JSON.parse(data);
+
 		if (message.id !== undefined) {
 			message.id = encodifyChannel(channel.id, message.id);
 			data = JSON.stringify(message);
@@ -163,6 +171,7 @@ export class CRDPChannel implements LikeSocket {
 
 	private storeMessageForLater(domain: string, messageData: string): void {
 		let messagesForDomain = this._pendingMessagesForDomain[domain];
+
 		if (messagesForDomain === undefined) {
 			this._pendingMessagesForDomain[domain] = [];
 			messagesForDomain = this._pendingMessagesForDomain[domain];
@@ -181,8 +190,11 @@ export class CRDPChannel implements LikeSocket {
 
 	public send(messageData: string): void {
 		const message = JSON.parse(messageData);
+
 		const method = message.method;
+
 		const isEnableMethod = method && method.endsWith(".enable");
+
 		let domain;
 
 		if (isEnableMethod) {
@@ -200,6 +212,7 @@ export class CRDPChannel implements LikeSocket {
 	private sendUnsentPendingMessages(domain: string): void {
 		if (this._pendingMessagesForDomain !== null) {
 			const pendingMessagesData = this._pendingMessagesForDomain[domain];
+
 			if (
 				pendingMessagesData !== undefined &&
 				this._messageCallbacks.length

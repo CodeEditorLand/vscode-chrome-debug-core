@@ -66,6 +66,7 @@ export class Breakpoints {
 		url: string,
 	): ISetBreakpointResult[] {
 		let canonicalizedUrl = utils.canonicalizeUrl(url);
+
 		return this._committedBreakpointsByUrl.get(canonicalizedUrl);
 	}
 
@@ -128,12 +129,14 @@ export class Breakpoints {
 				const originalArgs = args;
 				args = JSON.parse(JSON.stringify(args));
 				args = this.adapter.lineColTransformer.setBreakpoints(args);
+
 				const sourceMapTransformerResponse =
 					this.adapter.sourceMapTransformer.setBreakpoints(
 						args,
 						requestSeq,
 						ids,
 					);
+
 				if (
 					sourceMapTransformerResponse &&
 					sourceMapTransformerResponse.args
@@ -152,10 +155,12 @@ export class Breakpoints {
 
 				// Get the target url of the script
 				let targetScriptUrl: string;
+
 				if (args.source.sourceReference) {
 					const handle = scripts.getSource(
 						args.source.sourceReference,
 					);
+
 					if ((!handle || !handle.scriptId) && args.source.path) {
 						// A sourcemapped script with inline sources won't have a scriptId here, but the
 						// source.path has been fixed.
@@ -164,6 +169,7 @@ export class Breakpoints {
 						const targetScript = scripts.getScriptById(
 							handle.scriptId,
 						);
+
 						if (targetScript) {
 							targetScriptUrl = targetScript.url;
 						}
@@ -177,6 +183,7 @@ export class Breakpoints {
 					const internalBPs = args.breakpoints.map(
 						(bp) => new InternalSourceBreakpoint(bp),
 					);
+
 					const setBreakpointsPFailOnError =
 						this._setBreakpointsRequestQ
 							.then(() =>
@@ -230,6 +237,7 @@ export class Breakpoints {
 									(setBpResult) => setBpResult.breakpoint,
 								),
 							};
+
 							if (body.breakpoints.every((bp) => !bp.verified)) {
 								// We need to send the original args to avoid adjusting the line and column numbers twice here
 								return this.unverifiedBpResponseForBreakpoints(
@@ -252,6 +260,7 @@ export class Breakpoints {
 							this.adapter.lineColTransformer.setBreakpointsResponse(
 								body,
 							);
+
 							return body;
 						},
 					);
@@ -306,6 +315,7 @@ export class Breakpoints {
 					this.adapter.pathTransformer.getTargetPathFromClientPath(
 						mappedPath,
 					);
+
 				if (!targetPath) {
 					return utils.errP(
 						localize(
@@ -330,6 +340,7 @@ export class Breakpoints {
 		scripts: ScriptContainer,
 	) {
 		let responsePs: Promise<ISetBreakpointResult>[];
+
 		if (ChromeUtils.isEvalScript(url)) {
 			// eval script with no real url - use debugger_setBreakpoint
 			const scriptId: Crdp.Runtime.ScriptId = utils.lstrip(
@@ -397,6 +408,7 @@ export class Breakpoints {
 		condition: string,
 	): Promise<ISetBreakpointResult> {
 		let bpLocation = { lineNumber, columnNumber };
+
 		if (this.adapter.columnBreakpointsEnabled && scriptId) {
 			// scriptId undefined when script not yet loaded, can't fix up column BP :(
 			try {
@@ -410,6 +422,7 @@ export class Breakpoints {
 						},
 						restrictToFunction: false,
 					});
+
 				if (possibleBpResponse.locations.length) {
 					const selectedLocation =
 						ChromeUtils.selectBreakpointLocation(
@@ -428,6 +441,7 @@ export class Breakpoints {
 		}
 
 		let result;
+
 		try {
 			result = await this.chrome.Debugger.setBreakpointByUrl({
 				urlRegex,
@@ -453,6 +467,7 @@ export class Breakpoints {
 
 		// Now convert the response to a SetBreakpointResponse so both response types can be handled the same
 		const locations = result.locations;
+
 		return <Crdp.Debugger.SetBreakpointResponse>{
 			breakpointId: result.breakpointId,
 			actualLocation: locations[0] && {
@@ -486,6 +501,7 @@ export class Breakpoints {
 			await this.validateBreakpointsPath(args);
 		} catch (e) {
 			logger.log("breakpointsLocations failed: " + e.message);
+
 			return { breakpoints: [] };
 		}
 
@@ -509,6 +525,7 @@ export class Breakpoints {
 
 		if (args.source.path) {
 			const source1 = JSON.parse(JSON.stringify(args.source));
+
 			const startArgs = this.adapter.sourceMapTransformer.setBreakpoints(
 				{
 					breakpoints: [{ line: args.line, column: args.column }],
@@ -536,14 +553,17 @@ export class Breakpoints {
 
 		// Get the target url of the script
 		let targetScriptUrl: string;
+
 		if (args.source.sourceReference) {
 			const handle = scripts.getSource(args.source.sourceReference);
+
 			if ((!handle || !handle.scriptId) && args.source.path) {
 				// A sourcemapped script with inline sources won't have a scriptId here, but the
 				// source.path has been fixed.
 				targetScriptUrl = args.source.path;
 			} else {
 				const targetScript = scripts.getScriptById(handle.scriptId);
+
 				if (targetScript) {
 					targetScriptUrl = targetScript.url;
 				}
@@ -554,6 +574,7 @@ export class Breakpoints {
 
 		if (targetScriptUrl) {
 			const script = scripts.getScriptByUrl(targetScriptUrl);
+
 			if (script) {
 				const end =
 					typeof args.endLine === "number"
@@ -578,6 +599,7 @@ export class Breakpoints {
 						end,
 						restrictToFunction: false,
 					});
+
 				if (possibleBpResponse.locations) {
 					let breakpoints = possibleBpResponse.locations.map(
 						(loc) => {
@@ -587,16 +609,19 @@ export class Breakpoints {
 							};
 						},
 					);
+
 					breakpoints =
 						this.adapter.sourceMapTransformer.setBreakpointsResponse(
 							breakpoints,
 							false,
 							requestSeq,
 						);
+
 					const response = { breakpoints };
 					this.adapter.lineColTransformer.setBreakpointsResponse(
 						response,
 					);
+
 					return response as DebugProtocol.BreakpointLocationsResponse["body"];
 				} else {
 					return { breakpoints: [] };
@@ -647,6 +672,7 @@ export class Breakpoints {
 				response.breakpointId || this.generateNextUnboundBreakpointId();
 
 			let bpId: number;
+
 			if (ids && ids[i]) {
 				// IDs passed in for previously unverified BPs
 				bpId = ids[i];
@@ -670,6 +696,7 @@ export class Breakpoints {
 			}
 
 			const thisBpRequest = requestBps[i];
+
 			if (thisBpRequest.hitCondition) {
 				if (!this.addHitConditionBreakpoint(thisBpRequest, response)) {
 					return {
@@ -706,10 +733,14 @@ export class Breakpoints {
 		const result = Breakpoints.HITCONDITION_MATCHER.exec(
 			requestBp.hitCondition.trim(),
 		);
+
 		if (result && result.length >= 3) {
 			let op = result[1] || ">=";
+
 			if (op === "=") op = "==";
+
 			const value = result[2];
+
 			const expr =
 				op === "%"
 					? `return (numHits % ${value}) === 0;`
@@ -725,6 +756,7 @@ export class Breakpoints {
 				numHits: 0,
 				shouldPause,
 			});
+
 			return true;
 		} else {
 			return false;
@@ -734,6 +766,7 @@ export class Breakpoints {
 	private clearAllBreakpoints(url: string): Promise<void> {
 		// We want to canonicalize this url because this._committedBreakpointsByUrl keeps url keys in canonicalized form
 		url = utils.canonicalizeUrl(url);
+
 		if (!this._committedBreakpointsByUrl.has(url)) {
 			return Promise.resolve();
 		}
@@ -763,9 +796,11 @@ export class Breakpoints {
 		scripts: ScriptContainer,
 	): void {
 		const script = scripts.getScriptById(params.location.scriptId);
+
 		const breakpointId = this._breakpointIdHandles.lookup(
 			params.breakpointId,
 		);
+
 		if (!script || !breakpointId) {
 			// Breakpoint resolved for a script we don't know about or a breakpoint we don't know about
 			return;
@@ -822,6 +857,7 @@ export class Breakpoints {
 	private generateNextUnboundBreakpointId(): string {
 		const unboundBreakpointUniquePrefix =
 			"__::[vscode_chrome_debug_adapter_unbound_breakpoint]::";
+
 		return `${unboundBreakpointUniquePrefix}${this._nextUnboundBreakpointId++}`;
 	}
 
@@ -918,7 +954,9 @@ export class Breakpoints {
 
 	public async resolvePendingBPs(source: string, scripts: ScriptContainer) {
 		source = source && utils.canonicalizeUrl(source);
+
 		const pendingBP = this._pendingBreakpointsByUrl.get(source);
+
 		if (
 			pendingBP &&
 			(!pendingBP.setWithPath ||
@@ -931,6 +969,7 @@ export class Breakpoints {
 			this._pendingBreakpointsByUrl.delete(source);
 		} else if (source) {
 			const sourceFileName = path.basename(source).toLowerCase();
+
 			if (
 				Array.from(this._pendingBreakpointsByUrl.keys()).find(
 					(key) => key.toLowerCase().indexOf(sourceFileName) > -1,
@@ -981,6 +1020,7 @@ export class Breakpoints {
 					this.chrome.Debugger.resume().catch(() => {
 						/* ignore failures */
 					});
+
 					return { didPause: false };
 				}
 			}

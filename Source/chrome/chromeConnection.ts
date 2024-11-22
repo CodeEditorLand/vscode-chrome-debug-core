@@ -43,6 +43,7 @@ export interface ITargetDiscoveryStrategy {
 		targetFilter?: ITargetFilter,
 		targetUrl?: string,
 	): Promise<ITarget>;
+
 	getAllTargets(
 		address: string,
 		port: number,
@@ -72,12 +73,14 @@ class LoggingSocket extends WebSocket {
 
 		this.on("message", (msgStr) => {
 			let msgObj: any;
+
 			try {
 				msgObj = JSON.parse(msgStr.toString());
 			} catch (e) {
 				logger.error(
 					`Invalid JSON from target: (${e.message}): ${msgStr}`,
 				);
+
 				return;
 			}
 
@@ -100,8 +103,10 @@ class LoggingSocket extends WebSocket {
 
 	public send(data: any, opts?: any, cb?: (err: Error) => void): void {
 		const msgStr = JSON.stringify(data);
+
 		if (this.readyState !== WebSocket.OPEN) {
 			logger.log(`→ Warning: Target not open! Message: ${msgStr}`);
+
 			return;
 		}
 
@@ -194,6 +199,7 @@ export class ChromeConnection
 		this._socket = new LoggingSocket(wsUrl, undefined, {
 			headers: { Host: "localhost" },
 		});
+
 		if (extraCRDPChannelPort) {
 			this._crdpSocketMultiplexor = new CRDPMultiplexor(
 				this._socket as any as LikeSocket,
@@ -236,6 +242,7 @@ export class ChromeConnection
 		extraCRDPChannelPort?: number,
 	): Promise<void> {
 		let selectedTarget: ITarget;
+
 		return utils
 			.retryAsync(
 				() =>
@@ -255,6 +262,7 @@ export class ChromeConnection
 			)
 			.then((target) => {
 				selectedTarget = target;
+
 				return this.attachToWebsocketUrl(
 					target.webSocketDebuggerUrl,
 					extraCRDPChannelPort,

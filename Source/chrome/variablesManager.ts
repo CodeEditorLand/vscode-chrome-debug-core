@@ -39,6 +39,7 @@ export class VariablesManager {
 		}
 
 		const handle = this._variableHandles.get(args.variablesReference);
+
 		if (!handle) {
 			return Promise.resolve<IVariablesResponseBody>(undefined);
 		}
@@ -49,6 +50,7 @@ export class VariablesManager {
 				logger.log(
 					"Error handling variables request: " + err.toString(),
 				);
+
 				return [];
 			})
 			.then((variables) => {
@@ -96,10 +98,12 @@ export class VariablesManager {
 					string,
 					Crdp.Runtime.PropertyDescriptor
 				>();
+
 				const internalPropsByName = new Map<
 					string,
 					Crdp.Runtime.InternalPropertyDescriptor
 				>();
+
 				getPropsResponses.forEach((response) => {
 					if (response) {
 						response.result.forEach((propDesc) =>
@@ -183,6 +187,7 @@ export class VariablesManager {
 		value: string,
 	): Promise<string> {
 		const setPropertyValueFn = `function() { return this["${propName}"] = ${value}; }`;
+
 		return this.chrome.Runtime.callFunctionOn({
 			objectId,
 			functionDeclaration: setPropertyValueFn,
@@ -193,6 +198,7 @@ export class VariablesManager {
 					const errMsg = ChromeUtils.errorMessageFromExceptionDetails(
 						response.exceptionDetails,
 					);
+
 					return Promise.reject<string>(
 						errors.errorFromEvaluate(errMsg),
 					);
@@ -233,20 +239,26 @@ export class VariablesManager {
 		const getIndexedVariablesFn = `
             function getIndexedVariables(start, count) {
                 var result = [];
+
                 for (var i = start; i < (start + count); i++) result[i] = this[i];
+
                 return result;
             }`;
 		// TODO order??
 		const getNamedVariablesFn = `
             function getNamedVariablesFn(start, count) {
                 var result = [];
+
                 var ownProps = Object.getOwnPropertyNames(this);
+
                 for (var i = start; i < (start + count); i++) result[i] = ownProps[i];
+
                 return result;
             }`;
 
 		const getVarsFn =
 			filter === "indexed" ? getIndexedVariablesFn : getNamedVariablesFn;
+
 		return this.getFilteredVariablesForObjectId(
 			objectId,
 			evaluateName,
@@ -276,6 +288,7 @@ export class VariablesManager {
 					const errMsg = ChromeUtils.errorMessageFromExceptionDetails(
 						evalResponse.exceptionDetails,
 					);
+
 					return Promise.reject(errors.errorFromEvaluate(errMsg));
 				} else {
 					// The eval was successful and returned a reference to the array object. Get the props, then filter
@@ -299,6 +312,7 @@ export class VariablesManager {
 		args: DebugProtocol.SetVariableArguments,
 	): Promise<ISetVariableResponseBody> {
 		const handle = this._variableHandles.get(args.variablesReference);
+
 		if (!handle) {
 			return Promise.reject(errors.setValueNotSupported());
 		}
@@ -315,6 +329,7 @@ export class VariablesManager {
 		value: string,
 	): Promise<string> {
 		let evalResultObject: Crdp.Runtime.RemoteObject;
+
 		return (
 			this.chrome.Debugger.evaluateOnCallFrame({
 				callFrameId,
@@ -328,15 +343,18 @@ export class VariablesManager {
 								ChromeUtils.errorMessageFromExceptionDetails(
 									evalResponse.exceptionDetails,
 								);
+
 							return Promise.reject(
 								errors.errorFromEvaluate(errMsg),
 							);
 						} else {
 							evalResultObject = evalResponse.result;
+
 							const newValue =
 								ChromeUtils.remoteObjectToCallArgument(
 									evalResultObject,
 								);
+
 							return this.chrome.Debugger.setVariableValue({
 								callFrameId,
 								scopeNumber,
@@ -382,7 +400,9 @@ export class VariablesManager {
 		}
 
 		const value = variables.getRemoteObjectPreview_object(object, context);
+
 		let propCountP: Promise<IPropCount>;
+
 		if (object.subtype === "array" || object.subtype === "typedarray") {
 			if (object.preview && !object.preview.overflow) {
 				propCountP = Promise.resolve(
@@ -412,10 +432,12 @@ export class VariablesManager {
 			parentEvaluateName,
 			name,
 		);
+
 		const variablesReference = this._variableHandles.create(
 			variables.createPropertyContainer(object, evaluateName),
 			context,
 		);
+
 		return propCountP.then(
 			({ indexedVariables, namedVariables }) =>
 				<DebugProtocol.Variable>{
@@ -441,6 +463,7 @@ export class VariablesManager {
 				"function remoteFunction(propName) { return this[propName]; }";
 
 			let response: Crdp.Runtime.CallFunctionOnResponse;
+
 			try {
 				response = await this.chrome.Runtime.callFunctionOn({
 					objectId: owningObjectId,
@@ -451,6 +474,7 @@ export class VariablesManager {
 				logger.error(
 					`Error evaluating getter for '{propDesc.name}' - {error.toString()}`,
 				);
+
 				return {
 					name: propDesc.name,
 					value: error.toString(),
@@ -467,6 +491,7 @@ export class VariablesManager {
 				logger.verbose(
 					"Exception thrown evaluating getter - " + exceptionMessage,
 				);
+
 				return {
 					name: propDesc.name,
 					value: exceptionMessage,
@@ -498,6 +523,7 @@ export class VariablesManager {
 	private getArrayNumPropsByEval(objectId: string): Promise<IPropCount> {
 		// +2 for __proto__ and length
 		const getNumPropsFn = `function() { return [this.length, Object.keys(this).length - this.length + 2]; }`;
+
 		return this.getNumPropsByEval(objectId, getNumPropsFn);
 	}
 
@@ -505,11 +531,13 @@ export class VariablesManager {
 		// +2 for __proto__ and length
 		// Object.keys doesn't return other props from a Buffer
 		const getNumPropsFn = `function() { return [this.length, 0]; }`;
+
 		return this.getNumPropsByEval(objectId, getNumPropsFn);
 	}
 
 	private getCollectionNumPropsByEval(objectId: string): Promise<IPropCount> {
 		const getNumPropsFn = `function() { return [0, Object.keys(this).length + 1]; }`; // +1 for [[Entries]];
+
 		return this.getNumPropsByEval(objectId, getNumPropsFn);
 	}
 
@@ -528,11 +556,13 @@ export class VariablesManager {
 					const errMsg = ChromeUtils.errorMessageFromExceptionDetails(
 						response.exceptionDetails,
 					);
+
 					return Promise.reject<IPropCount>(
 						errors.errorFromEvaluate(errMsg),
 					);
 				} else if (response.result) {
 					const resultProps = response.result.value;
+
 					if (resultProps.length !== 2) {
 						return Promise.reject<IPropCount>(
 							errors.errorFromEvaluate(

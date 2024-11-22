@@ -182,11 +182,13 @@ export interface IDebugAdapter {
 		requestSeq?: number,
 	): PromiseOrNot<void>;
 	disconnect(args: DebugProtocol.DisconnectArguments): PromiseOrNot<void>;
+
 	setBreakpoints(
 		args: DebugProtocol.SetBreakpointsArguments,
 		telemetryPropertyCollector?: ITelemetryPropertyCollector,
 		requestSeq?: number,
 	): PromiseOrNot<ISetBreakpointsResponseBody>;
+
 	setExceptionBreakpoints(
 		args: DebugProtocol.SetExceptionBreakpointsArguments,
 		telemetryPropertyCollector?: ITelemetryPropertyCollector,
@@ -210,6 +212,7 @@ export interface IDebugAdapter {
 		telemetryPropertyCollector?: ITelemetryPropertyCollector,
 		requestSeq?: number,
 	): PromiseOrNot<IScopesResponseBody>;
+
 	variables(
 		args: DebugProtocol.VariablesArguments,
 		telemetryPropertyCollector?: ITelemetryPropertyCollector,
@@ -235,10 +238,12 @@ export interface IDebugTransformer {
 	): PromiseOrNot<void>;
 	launch?(args: ILaunchRequestArgs, requestSeq?: number): PromiseOrNot<void>;
 	attach?(args: IAttachRequestArgs, requestSeq?: number): PromiseOrNot<void>;
+
 	setBreakpoints?(
 		args: DebugProtocol.SetBreakpointsArguments,
 		requestSeq?: number,
 	): PromiseOrNot<DebugProtocol.SetBreakpointsArguments>;
+
 	setExceptionBreakpoints?(
 		args: DebugProtocol.SetExceptionBreakpointsArguments,
 		requestSeq?: number,
@@ -252,6 +257,7 @@ export interface IDebugTransformer {
 		args: DebugProtocol.ScopesArguments,
 		requestSeq?: number,
 	): PromiseOrNot<void>;
+
 	variables?(
 		args: DebugProtocol.VariablesArguments,
 		requestSeq?: number,
@@ -277,6 +283,7 @@ export interface IDebugTransformer {
 		response: IScopesResponseBody,
 		requestSeq?: number,
 	): PromiseOrNot<void>;
+
 	variablesResponse?(
 		response: IVariablesResponseBody,
 		requestSeq?: number,

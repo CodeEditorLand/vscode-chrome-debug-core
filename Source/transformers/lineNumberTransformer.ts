@@ -26,6 +26,7 @@ export class LineColTransformer implements IDebugTransformer {
 		args.breakpoints.forEach((bp) =>
 			this.convertClientLocationToDebugger(bp),
 		);
+
 		if (!this.columnBreakpointsEnabled) {
 			args.breakpoints.forEach((bp) => (bp.column = undefined));
 		}
@@ -37,6 +38,7 @@ export class LineColTransformer implements IDebugTransformer {
 		response.breakpoints.forEach((bp) =>
 			this.convertDebuggerLocationToClient(bp),
 		);
+
 		if (!this.columnBreakpointsEnabled) {
 			response.breakpoints.forEach((bp) => (bp.column = 1));
 		}
@@ -50,6 +52,7 @@ export class LineColTransformer implements IDebugTransformer {
 
 	public breakpointResolved(bp: DebugProtocol.Breakpoint): void {
 		this.convertDebuggerLocationToClient(bp);
+
 		if (!this.columnBreakpointsEnabled) {
 			bp.column = undefined;
 		}

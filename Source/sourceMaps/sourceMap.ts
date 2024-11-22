@@ -47,12 +47,14 @@ export class SourceMap {
 			this._allSourcePathDetails = this._sources
 				.map((inferredPath, i) => {
 					const originalSource = this._originalSources[i];
+
 					const originalPath = this._originalSourceRoot
 						? sourceMapUtils.getFullSourceEntry(
 								this._originalSourceRoot,
 								originalSource,
 							)
 						: originalSource;
+
 					return <ISourcePathDetails>{
 						inferredPath,
 						originalPath,
@@ -69,11 +71,13 @@ export class SourceMap {
 						logger.log(
 							`Could not map start position for: ${a.inferredPath}`,
 						);
+
 						return -1;
 					} else if (!b.startPosition) {
 						logger.log(
 							`Could not map start position for: ${b.inferredPath}`,
 						);
+
 						return 1;
 					}
 
@@ -104,12 +108,14 @@ export class SourceMap {
 		const sm = JSON.parse(json);
 		logger.log(`SourceMap: creating for ${generatedPath}`);
 		logger.log(`SourceMap: sourceRoot: ${sm.sourceRoot}`);
+
 		if (sm.sourceRoot && sm.sourceRoot.toLowerCase() === "/source/") {
 			logger.log(
 				"Warning: if you are using gulp-sourcemaps < 2.0 directly or indirectly, you may need to set sourceRoot manually in your build config, if your files are not actually under a directory called /source",
 			);
 		}
 		logger.log(`SourceMap: sources: ${JSON.stringify(sm.sources)}`);
+
 		if (pathMapping) {
 			logger.log(
 				`SourceMap: pathMapping: ${JSON.stringify(pathMapping)}`,
@@ -138,12 +144,14 @@ export class SourceMap {
 					this._originalSourceRoot,
 					sourcePath,
 				);
+
 				const mappedFullSourceEntry =
 					sourceMapUtils.applySourceMapPathOverrides(
 						fullSourceEntry,
 						sourceMapPathOverrides,
 						isVSClient,
 					);
+
 				if (fullSourceEntry !== mappedFullSourceEntry) {
 					return utils.canonicalizeUrl(mappedFullSourceEntry);
 				}
@@ -174,6 +182,7 @@ export class SourceMap {
 				lowerCaseSourceAbsPath,
 				sourceAbsPath,
 			);
+
 			return utils.pathToFileURL(lowerCaseSourceAbsPath, true);
 		});
 
@@ -216,6 +225,7 @@ export class SourceMap {
 		};
 
 		let position = this._smc.originalPositionFor(lookupArgs);
+
 		if (!position.source) {
 			// If it can't find a match, it returns a mapping with null props. Try looking the other direction.
 			lookupArgs.bias = (<any>SourceMapConsumer).LEAST_UPPER_BOUND;
@@ -264,6 +274,7 @@ export class SourceMap {
 		};
 
 		let position = this._smc.generatedPositionFor(lookupArgs);
+
 		if (position.line === null) {
 			// If it can't find a match, it returns a mapping with null props. Try looking the other direction.
 			lookupArgs.bias = (<any>SourceMapConsumer).GREATEST_LOWER_BOUND;
@@ -283,6 +294,7 @@ export class SourceMap {
 
 	public sourceContentFor(authoredSourcePath: string): string {
 		authoredSourcePath = utils.pathToFileURL(authoredSourcePath, true);
+
 		return (<any>this._smc).sourceContentFor(
 			authoredSourcePath,
 			/*returnNullOnMissing=*/ true,

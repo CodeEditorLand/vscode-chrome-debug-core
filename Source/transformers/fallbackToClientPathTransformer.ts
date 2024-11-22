@@ -31,6 +31,7 @@ export class FallbackToClientPathTransformer extends UrlPathTransformer {
 								"The fallback transformation failed due to: " +
 									rejection,
 							);
+
 							return filePath;
 						},
 					);

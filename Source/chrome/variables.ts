@@ -18,6 +18,7 @@ export interface IVariableContainer {
 		start?: number,
 		count?: number,
 	): Promise<DebugProtocol.Variable[]>;
+
 	setValue(
 		variablesManager: VariablesManager,
 		name: string,
@@ -172,6 +173,7 @@ export class ScopeContainer extends BaseVariableContainer {
 			.remoteObjectToVariable(name, obj)
 			.then((variable) => {
 				variables.unshift(variable);
+
 				return variables;
 			});
 	}
@@ -221,6 +223,7 @@ export class ExceptionValueContainer extends ExceptionContainer {
 			name: "Exception",
 			value: this._exception,
 		};
+
 		return variablesManager
 			.propertyDescriptorToVariable(excValuePropDescriptor)
 			.then((variable) => [variable]);
@@ -232,17 +235,22 @@ export function isIndexedPropName(name: string): boolean {
 }
 
 const PREVIEW_PROPS_DEFAULT = 3;
+
 const PREVIEW_PROPS_CONSOLE = 8;
+
 const PREVIEW_PROP_LENGTH = 50;
+
 const ELLIPSIS = "…";
 function getArrayPreview(
 	object: Crdp.Runtime.RemoteObject,
 	context?: string,
 ): string {
 	let value = object.description;
+
 	if (object.preview) {
 		const numProps =
 			context === "repl" ? PREVIEW_PROPS_CONSOLE : PREVIEW_PROPS_DEFAULT;
+
 		const indexedProps = object.preview.properties.filter((prop) =>
 			isIndexedPropName(prop.name),
 		);
@@ -257,10 +265,12 @@ function getArrayPreview(
 
 		// Insert ... where there are undefined indexes
 		const propValues: string[] = [];
+
 		for (let i = 0; i < propsWithIdx.length; i++) {
 			const prop = propsWithIdx[i];
 
 			const prevIdx = i === 0 ? -1 : propsWithIdx[i - 1].idx;
+
 			if (prop.idx > prevIdx + 1) {
 				propValues.push(ELLIPSIS);
 			}
@@ -269,6 +279,7 @@ function getArrayPreview(
 		}
 
 		let propsPreview = propValues.join(", ");
+
 		if (object.preview.overflow || indexedProps.length > numProps) {
 			propsPreview += ", " + ELLIPSIS;
 		}
@@ -284,13 +295,17 @@ function getObjectPreview(
 	context?: string,
 ): string {
 	let value = object.description;
+
 	if (object.preview) {
 		const numProps =
 			context === "repl" ? PREVIEW_PROPS_CONSOLE : PREVIEW_PROPS_DEFAULT;
+
 		const props = object.preview.properties.slice(0, numProps);
+
 		let propsPreview = props
 			.map((prop) => {
 				const name = prop.name || `""`;
+
 				return `${name}: ${propertyPreviewToString(prop)}`;
 			})
 			.join(", ");
@@ -348,6 +363,7 @@ export function getRemoteObjectPreview_object(
 	context?: string,
 ): string {
 	const objectDescription = object.description || "";
+
 	if (<string>object.subtype === "internal#location") {
 		// Could format this nicely later, see #110
 		return "internal#location";
@@ -359,6 +375,7 @@ export function getRemoteObjectPreview_object(
 		// The Error's description contains the whole stack which is not a nice description.
 		// Up to the first newline is just the error name/message.
 		const firstNewlineIdx = objectDescription.indexOf("\n");
+
 		return firstNewlineIdx >= 0
 			? objectDescription.substr(0, firstNewlineIdx)
 			: objectDescription;
@@ -366,6 +383,7 @@ export function getRemoteObjectPreview_object(
 		const promiseStatus = object.preview.properties.filter(
 			(prop) => prop.name === "[[PromiseStatus]]",
 		)[0];
+
 		return promiseStatus
 			? objectDescription + " { " + promiseStatus.value + " }"
 			: objectDescription;
@@ -373,6 +391,7 @@ export function getRemoteObjectPreview_object(
 		const generatorStatus = object.preview.properties.filter(
 			(prop) => prop.name === "[[GeneratorStatus]]",
 		)[0];
+
 		return generatorStatus
 			? objectDescription + " { " + generatorStatus.value + " }"
 			: objectDescription;
@@ -407,10 +426,12 @@ export function getRemoteObjectPreview_function(
 	context?: string,
 ): string {
 	const firstBraceIdx = object.description.indexOf("{");
+
 	if (firstBraceIdx >= 0) {
 		return object.description.substring(0, firstBraceIdx) + "{ … }";
 	} else {
 		const firstArrowIdx = object.description.indexOf("=>");
+
 		return firstArrowIdx >= 0
 			? object.description.substring(0, firstArrowIdx + 2) + " …"
 			: object.description;
@@ -456,6 +477,7 @@ export function getCollectionNumPropsByPreview(
 	object: Crdp.Runtime.RemoteObject,
 ): IPropCount {
 	let indexedVariables = 0;
+
 	let namedVariables = object.preview.properties.length + 1; // +1 for [[Entries]];
 
 	return { indexedVariables, namedVariables };
@@ -465,9 +487,11 @@ export function getArrayNumPropsByPreview(
 	object: Crdp.Runtime.RemoteObject,
 ): IPropCount {
 	let indexedVariables = 0;
+
 	const indexedProps = object.preview.properties.filter((prop) =>
 		isIndexedPropName(prop.name),
 	);
+
 	if (indexedProps.length) {
 		// +1 because (last index=0) => 1 prop
 		indexedVariables =
@@ -506,11 +530,13 @@ export function createPrimitiveVariable(
 	stringify?: boolean,
 ): DebugProtocol.Variable {
 	const value = getRemoteObjectPreview_primitive(object, stringify);
+
 	const variable = createPrimitiveVariableWithValue(
 		name,
 		value,
 		parentEvaluateName,
 	);
+
 	variable.type = object.type;
 
 	return variable;
@@ -527,6 +553,7 @@ export function createFunctionVariable(
 
 	if (object.description) {
 		const firstBraceIdx = object.description.indexOf("{");
+
 		if (firstBraceIdx >= 0) {
 			value = object.description.substring(0, firstBraceIdx) + "{ … }";
 		} else {
@@ -541,6 +568,7 @@ export function createFunctionVariable(
 	}
 
 	const evaluateName = ChromeUtils.getEvaluateName(parentEvaluateName, name);
+
 	return <DebugProtocol.Variable>{
 		name,
 		value,

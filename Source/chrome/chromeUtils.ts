@@ -33,6 +33,7 @@ export function applyPathMappingsToTargetUrlPath(
 	const mappingKeys = Object.keys(pathMapping).sort(
 		(a, b) => b.length - a.length,
 	);
+
 	for (let pattern of mappingKeys) {
 		// empty pattern match nothing use / to match root
 		if (!pattern) {
@@ -40,6 +41,7 @@ export function applyPathMappingsToTargetUrlPath(
 		}
 
 		const mappingRHS = pathMapping[pattern];
+
 		if (pattern[0] !== "/") {
 			logger.log(`PathMapping keys should be absolute: ${pattern}`);
 			pattern = "/" + pattern;
@@ -74,6 +76,7 @@ export function applyPathMappingsToTargetUrl(
 	pathMapping: IPathMapping,
 ): string {
 	const parsedUrl = url.parse(scriptUrl);
+
 	if (
 		!parsedUrl.protocol ||
 		parsedUrl.protocol.startsWith("file") ||
@@ -92,6 +95,7 @@ function toClientPath(
 	scriptPath: string,
 ): string {
 	const rest = decodeURIComponent(scriptPath.substring(pattern.length));
+
 	const mappedResult = rest ? utils.properJoin(mappingRHS, rest) : mappingRHS;
 
 	return mappedResult;
@@ -114,12 +118,14 @@ export async function targetUrlToClientPath(
 	// If the url is an absolute path to a file that exists, return it without file:///.
 	// A remote absolute url (cordova) will still need the logic below.
 	const canonicalUrl = utils.canonicalizeUrl(aUrl);
+
 	if (utils.isFileUrl(aUrl)) {
 		if (await utils.exists(canonicalUrl)) {
 			return canonicalUrl;
 		}
 
 		const networkPath = utils.fileUrlToNetworkPath(aUrl);
+
 		if (networkPath !== aUrl && (await utils.exists(networkPath))) {
 			return networkPath;
 		}
@@ -127,6 +133,7 @@ export async function targetUrlToClientPath(
 
 	// Search the filesystem under the webRoot for the file that best matches the given url
 	let pathName = url.parse(canonicalUrl).pathname;
+
 	if (!pathName || pathName === "/") {
 		return "";
 	}
@@ -135,12 +142,15 @@ export async function targetUrlToClientPath(
 	const pathParts = pathName
 		.replace(/^\//, "") // Strip leading /
 		.split(/[\/\\]/);
+
 	while (pathParts.length > 0) {
 		const joinedPath = "/" + pathParts.join("/");
+
 		const clientPath = applyPathMappingsToTargetUrlPath(
 			joinedPath,
 			pathMapping,
 		);
+
 		if (isInternalRemotePath(clientPath)) {
 			return clientPath;
 		} else if (clientPath && (await utils.exists(clientPath))) {
@@ -162,6 +172,7 @@ export function remoteObjectToValue(
 	stringify = true,
 ): { value: string; variableHandleRef?: string } {
 	let value = "";
+
 	let variableHandleRef: string;
 
 	if (object) {
@@ -177,6 +188,7 @@ export function remoteObjectToValue(
 			value = "undefined";
 		} else if (object.type === "function") {
 			const firstBraceIdx = object.description.indexOf("{");
+
 			if (firstBraceIdx >= 0) {
 				value =
 					object.description.substring(0, firstBraceIdx) + "{ … }";
@@ -215,6 +227,7 @@ export function getMatchingTargets(
 ): ITarget[] {
 	const standardizeMatch = (aUrl: string) => {
 		aUrl = aUrl.toLowerCase();
+
 		if (utils.isFileUrl(aUrl)) {
 			// Strip file:///, if present
 			aUrl = utils.fileUrlToPath(aUrl);
@@ -235,12 +248,14 @@ export function getMatchingTargets(
 		.replace(/\*/g, ".*");
 
 	const targetUrlRegex = new RegExp("^" + targetUrlPattern + "$", "g");
+
 	return targets.filter(
 		(target) => !!standardizeMatch(target.url).match(targetUrlRegex),
 	);
 }
 
 const PROTO_NAME = "__proto__";
+
 const NUM_REGEX = /^[0-9]+$/;
 export function compareVariableNames(var1: string, var2: string): number {
 	// __proto__ at the end
@@ -251,6 +266,7 @@ export function compareVariableNames(var1: string, var2: string): number {
 	}
 
 	const isNum1 = !!var1.match(NUM_REGEX);
+
 	const isNum2 = !!var2.match(NUM_REGEX);
 
 	if (isNum1 && !isNum2) {
@@ -262,7 +278,9 @@ export function compareVariableNames(var1: string, var2: string): number {
 	} else if (isNum1 && isNum2) {
 		// Compare numbers as numbers
 		const int1 = parseInt(var1, 10);
+
 		const int2 = parseInt(var2, 10);
+
 		return int1 - int2;
 	}
 
@@ -289,6 +307,7 @@ export function descriptionFromExceptionDetails(
 	exceptionDetails: Crdp.Runtime.ExceptionDetails,
 ): string {
 	let description: string;
+
 	if (exceptionDetails.exception) {
 		// Take exception object description, or if a value was thrown, the value
 		description =
@@ -308,7 +327,9 @@ export function errorMessageFromExceptionDetails(
 	exceptionDetails: Crdp.Runtime.ExceptionDetails,
 ): string {
 	let description = descriptionFromExceptionDetails(exceptionDetails);
+
 	const newlineIdx = description.indexOf("\n");
+
 	if (newlineIdx >= 0) {
 		description = description.substr(0, newlineIdx);
 	}
@@ -323,6 +344,7 @@ export function getEvaluateName(
 	if (!parentEvaluateName) return name;
 
 	let nameAccessor: string;
+
 	if (/^[a-zA-Z_$][a-zA-Z_$0-9]*$/.test(name)) {
 		nameAccessor = "." + name;
 	} else if (/^\d+$/.test(name)) {
@@ -359,8 +381,11 @@ For example, for a file index.js the regex will match urls containing index.js, 
 It won't match index100.js, indexabc.ts etc */
 export function getUrlRegexForBreakOnLoad(url: string): string {
 	const fileNameWithoutFullPath = path.parse(url).base;
+
 	const fileNameWithoutExtension = path.parse(fileNameWithoutFullPath).name;
+
 	const escapedFileName = pathToRegex(fileNameWithoutExtension);
+
 	return ".*[\\\\\\/]" + escapedFileName + "([^A-z^0-9].*)?$";
 }
 
@@ -379,6 +404,7 @@ export async function isPortInUse(
 	// Basically just create a socket and try to connect on that port, if we can connect, it's open
 	return new Promise<boolean>((resolve, _reject) => {
 		const socket = new Socket();
+
 		function createCallback(inUse: boolean) {
 			return () => {
 				resolve(inUse);
@@ -402,13 +428,16 @@ export async function isPortInUse(
  */
 export async function getLaunchedPort(userDataDir: string): Promise<number> {
 	const activePortFilePath = path.join(userDataDir, "DevToolsActivePort");
+
 	try {
 		const activePortArgs = await utils.readFileP(
 			activePortFilePath,
 			"utf-8",
 		);
+
 		const [portStr] = activePortArgs.split("\n"); // chrome uses \n regardless of platform in this file
 		const port = parseInt(portStr, 10);
+
 		if (isNaN(port))
 			return Promise.reject(
 				errors.activePortFileContentsInvalid(
@@ -416,6 +445,7 @@ export async function getLaunchedPort(userDataDir: string): Promise<number> {
 					activePortArgs,
 				),
 			);
+
 		return port;
 	} catch (err) {
 		return Promise.reject(

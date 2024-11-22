@@ -24,8 +24,11 @@ const localize = nls.loadMessageBundle();
 export class Version {
 	static parse(versionString: string): Version {
 		const majorAndMinor = versionString.split(".");
+
 		const major = parseInt(majorAndMinor[0], 10);
+
 		const minor = parseInt(majorAndMinor[1], 10);
+
 		return new Version(major, minor);
 	}
 
@@ -82,6 +85,7 @@ export class ChromeTargetDiscovery
 			targetFilter,
 			targetUrl,
 		);
+
 		if (targets.length > 1) {
 			this.logger.log(
 				"Warning: Found more than one valid target page. Attaching to the first one. Available pages: " +
@@ -150,9 +154,11 @@ export class ChromeTargetDiscovery
 		try {
 			if (jsonResponse) {
 				const response = JSON.parse(jsonResponse);
+
 				const protocolVersionString = response[
 					"Protocol-Version"
 				] as string;
+
 				const browserWithPrefixVersionString =
 					response.Browser as string;
 				this.logger.log(
@@ -170,7 +176,9 @@ export class ChromeTargetDiscovery
                  */
 
 				const chromePrefix = "Chrome/";
+
 				let browserVersion = Version.unknownVersion();
+
 				if (browserWithPrefixVersionString.startsWith(chromePrefix)) {
 					const browserVersionString =
 						browserWithPrefixVersionString.substr(
@@ -182,6 +190,7 @@ export class ChromeTargetDiscovery
 				this.telemetry.reportEvent("targetDebugProtocolVersion", {
 					debugProtocolVersion: response["Protcol-Version"],
 				});
+
 				return new TargetVersions(
 					Version.parse(protocolVersionString),
 					browserVersion,
@@ -214,6 +223,7 @@ export class ChromeTargetDiscovery
 
 		const checkDiscoveryEndpoint = (url: string) => {
 			this.logger.log(`Discovering targets via ${url}`);
+
 			return utils.getURL(url, { headers: { Host: "localhost" } });
 		};
 
@@ -239,6 +249,7 @@ export class ChromeTargetDiscovery
            }
          */
 		this.events.emitStepStarted("Attach.ProcessDebuggerTargetsInformation");
+
 		let responseArray: any;
 
 		try {
@@ -265,6 +276,7 @@ export class ChromeTargetDiscovery
 			return (responseArray as ITarget[]).map((target) => {
 				this._fixRemoteUrl(address, port, target);
 				target.version = version;
+
 				return target;
 			});
 		} else {
@@ -307,6 +319,7 @@ export class ChromeTargetDiscovery
 		const targetsWithWSURLs = filteredTargets.filter(
 			(target) => !!target.webSocketDebuggerUrl,
 		);
+
 		if (!targetsWithWSURLs.length) {
 			throw new Error(
 				localize(
@@ -328,6 +341,7 @@ export class ChromeTargetDiscovery
 		if (target.webSocketDebuggerUrl) {
 			const addressMatch =
 				target.webSocketDebuggerUrl.match(/ws:\/\/([^/]+)\/?/);
+
 			if (addressMatch) {
 				const replaceAddress = `${remoteAddress}:${remotePort}`;
 				target.webSocketDebuggerUrl =

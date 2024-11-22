@@ -23,6 +23,7 @@ export class EagerSourceMapTransformer extends BaseSourceMapTransformer {
 
 	protected init(args: ILaunchRequestArgs | IAttachRequestArgs): void {
 		super.init(args);
+
 		if (args.sourceMaps) {
 			const generatedCodeGlobs = args.outFiles
 				? args.outFiles
@@ -42,6 +43,7 @@ export class EagerSourceMapTransformer extends BaseSourceMapTransformer {
 						logger.log(
 							`SourceMaps: expanded globs and found ${paths.length} scripts`,
 						);
+
 						return Promise.all(
 							paths.map((scriptPath) =>
 								this.discoverSourceMapForGeneratedScript(
@@ -66,6 +68,7 @@ export class EagerSourceMapTransformer extends BaseSourceMapTransformer {
 					logger.log(
 						`SourceMaps: sourcemap url parsed from end of generated content: ${uri}`,
 					);
+
 					return this._sourceMaps.processNewSourceMap(
 						generatedScriptPath,
 						undefined,
@@ -76,6 +79,7 @@ export class EagerSourceMapTransformer extends BaseSourceMapTransformer {
 					logger.log(
 						`SourceMaps: no sourcemap url found in generated script: ${generatedScriptPath}`,
 					);
+
 					return undefined;
 				}
 			})
@@ -111,6 +115,7 @@ export class EagerSourceMapTransformer extends BaseSourceMapTransformer {
 	 */
 	private findSourceMapUrl(contents: string): string {
 		const lines = contents.split("\n");
+
 		for (
 			let l = lines.length - 1;
 			l >= Math.max(lines.length - 10, 0);
@@ -118,8 +123,10 @@ export class EagerSourceMapTransformer extends BaseSourceMapTransformer {
 		) {
 			// only search for url in the last 10 lines
 			const line = lines[l].trim();
+
 			const matches =
 				EagerSourceMapTransformer.SOURCE_MAPPING_MATCHER.exec(line);
+
 			if (matches && matches.length === 2) {
 				return matches[1].trim();
 			}

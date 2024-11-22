@@ -39,7 +39,9 @@ export function formatConsoleArguments(
 		case "timeEnd":
 		case "count":
 			args = resolveParams(args);
+
 			break;
+
 		case "assert":
 			const formattedParams = args.length
 				? // 'assert' doesn't support format specifiers
@@ -50,19 +52,25 @@ export function formatConsoleArguments(
 				formattedParams[0] && formattedParams[0].type === "string"
 					? formattedParams.shift().value
 					: "";
+
 			let outputText =
 				`Assertion failed: ${assertMsg}\n` +
 				stackTraceToString(stackTrace);
 
 			args = [{ type: "string", value: outputText }, ...formattedParams];
+
 			break;
+
 		case "startGroup":
 		case "startGroupCollapsed":
 			let startMsg = "‹Start group›";
+
 			const formattedGroupParams = resolveParams(args);
+
 			const previewMessage = formattedGroupParams.find(
 				(x) => x && x.type === "string",
 			);
+
 			if (previewMessage) {
 				startMsg += ": " + previewMessage.value;
 			}
@@ -71,10 +79,14 @@ export function formatConsoleArguments(
 				{ type: "string", value: startMsg },
 				...formattedGroupParams,
 			];
+
 			break;
+
 		case "endGroup":
 			args = [{ type: "string", value: "‹End group›" }];
+
 			break;
+
 		case "trace":
 			args = [
 				{
@@ -82,16 +94,21 @@ export function formatConsoleArguments(
 					value: "console.trace()\n" + stackTraceToString(stackTrace),
 				},
 			];
+
 			break;
+
 		case "clear":
 			args = [{ type: "string", value: clearConsoleCode }];
+
 			break;
+
 		default:
 			// Some types we have to ignore
 			return null;
 	}
 
 	const isError = type === "assert" || type === "error";
+
 	return { args, isError };
 }
 
@@ -109,12 +126,14 @@ function resolveParams(
 
 	// Find all %s, %i, etc in the first argument, which is always the main text. Strip %
 	let formatSpecifiers: string[];
+
 	const firstTextArg = args.shift();
 
 	// currentCollapsedStringArg is the accumulated text
 	let currentCollapsedStringArg =
 		variables.getRemoteObjectPreview(firstTextArg, /*stringify=*/ false) +
 		"";
+
 	if (firstTextArg.type === "string" && !skipFormatSpecifiers) {
 		formatSpecifiers = (
 			currentCollapsedStringArg.match(/\%[sidfoOc]/g) || []
@@ -124,6 +143,7 @@ function resolveParams(
 	}
 
 	const processedArgs: Crdp.Runtime.RemoteObject[] = [];
+
 	const pushStringArg = (strArg: string) => {
 		if (typeof strArg === "string") {
 			processedArgs.push({ type: "string", value: strArg });
@@ -135,6 +155,7 @@ function resolveParams(
 		const arg = args[argIdx];
 
 		const formatSpec = formatSpecifiers.shift();
+
 		const formatted = formatArg(formatSpec, arg);
 
 		currentCollapsedStringArg = currentCollapsedStringArg || "";
@@ -156,10 +177,12 @@ function resolveParams(
 			const curSpecIdx = currentCollapsedStringArg.indexOf(
 				"%" + formatSpec,
 			);
+
 			const processedPart = currentCollapsedStringArg.slice(
 				0,
 				curSpecIdx,
 			);
+
 			if (processedPart) {
 				pushStringArg(processedPart);
 			}
@@ -217,7 +240,9 @@ function formatColorArg(arg: Crdp.Runtime.RemoteObject): string {
 	const cssRegex = /\s*(.*?)\s*:\s*(.*?)\s*(?:;|$)/g;
 
 	let escapedSequence: string | undefined;
+
 	let match = cssRegex.exec(arg.value);
+
 	while (match != null) {
 		if (match.length === 3) {
 			if (escapedSequence === undefined) {
@@ -230,26 +255,32 @@ function formatColorArg(arg: Crdp.Runtime.RemoteObject): string {
 				switch (match[1]) {
 					case "color":
 						const color = getAnsi16Color(match[2]);
+
 						if (color) {
 							escapedSequence += `;${color}`;
 						}
 						break;
+
 					case "background":
 						const background = getAnsi16Color(match[2]);
+
 						if (background) {
 							escapedSequence += `;${background + 10}`;
 						}
 						break;
+
 					case "font-weight":
 						if (match[2] === "bold") {
 							escapedSequence += ";1";
 						}
 						break;
+
 					case "text-decoration":
 						if (match[2] === "underline") {
 							escapedSequence += ";4";
 						}
 						break;
+
 					default:
 					// css not mapped, skip
 				}
@@ -275,7 +306,9 @@ function stackTraceToString(stackTrace: Crdp.Runtime.StackTrace): string {
 		.map((frame) => {
 			const fnName =
 				frame.functionName || (frame.url ? "(anonymous)" : "(eval)");
+
 			const fileName = frame.url ? frame.url : "eval";
+
 			return `    at ${fnName} (${fileName}:${frame.lineNumber + 1}:${frame.columnNumber})`;
 		})
 		.join("\n");
@@ -285,6 +318,7 @@ function getAnsi16Color(colorString: string): number {
 	try {
 		// Color can parse hex and color names
 		const color = new Color(colorString);
+
 		return color.ansi16().object().ansi16;
 	} catch (ex) {
 		// Unable to parse Color

@@ -26,6 +26,7 @@ export const enum Platform {
 
 export function getPlatform(): Platform {
 	const platform = os.platform();
+
 	return platform === "darwin"
 		? Platform.OSX
 		: platform === "win32"
@@ -39,6 +40,7 @@ export function getPlatform(): Platform {
 export function existsSync(path: string): boolean {
 	try {
 		fs.statSync(path);
+
 		return true;
 	} catch (e) {
 		// doesn't exist
@@ -52,6 +54,7 @@ export function existsSync(path: string): boolean {
 export async function exists(path: string): Promise<boolean> {
 	try {
 		await util.promisify(fs.stat)(path);
+
 		return true;
 	} catch (e) {
 		// doesn't exist
@@ -80,6 +83,7 @@ export function existsAsync(path: string): Promise<boolean> {
 export function reversedArr(arr: any[]): any[] {
 	return arr.reduce((reversed: any[], x: any) => {
 		reversed.unshift(x);
+
 		return reversed;
 	}, []);
 }
@@ -157,6 +161,7 @@ export function canonicalizeUrl(urlOrPath: string): string {
 
 	urlOrPath = stripTrailingSlash(urlOrPath);
 	urlOrPath = fixDriveLetterAndSlashes(urlOrPath);
+
 	if (!caseSensitivePaths) {
 		urlOrPath = normalizeIfFSIsCaseInsensitive(urlOrPath);
 	}
@@ -183,6 +188,7 @@ export function fileUrlToPath(urlOrPath: string): string {
 	if (isFileUrl(urlOrPath)) {
 		urlOrPath = urlOrPath.replace("file:///", "");
 		urlOrPath = decodeURIComponent(urlOrPath);
+
 		if (urlOrPath[0] !== "/" && !urlOrPath.match(/^[A-Za-z]:/)) {
 			// If it has a : before the first /, assume it's a windows path or url.
 			// Ensure unix-style path starts with /, it can be removed when file:/// was stripped.
@@ -226,6 +232,7 @@ export function fixDriveLetterAndSlashes(
 	if (!aPath) return aPath;
 
 	aPath = fixDriveLetter(aPath, uppercaseDriveLetter);
+
 	if (aPath.match(/file:\/\/\/[A-Za-z]:/)) {
 		const prefixLen = "file:///".length;
 		aPath =
@@ -277,6 +284,7 @@ export function errP(msg: string | Error): Promise<never> {
 	const isErrorLike = (thing: any): thing is Error => !!thing.message;
 
 	let e: Error;
+
 	if (!msg) {
 		e = new Error("Unknown error");
 	} else if (isErrorLike(msg)) {
@@ -298,6 +306,7 @@ export function getURL(
 ): Promise<string> {
 	return new Promise((resolve, reject) => {
 		const parsedUrl = url.parse(aUrl);
+
 		const get = parsedUrl.protocol === "https:" ? https.get : http.get;
 		options = <https.RequestOptions>{
 			rejectUnauthorized: false,
@@ -359,6 +368,7 @@ export function lstrip(s: string, lStr: string): string {
  */
 export function pathToFileURL(_absPath: string, normalize?: boolean): string {
 	let absPath = forceForwardSlashes(_absPath);
+
 	if (normalize) {
 		absPath = path.normalize(absPath);
 		absPath = forceForwardSlashes(absPath);
@@ -371,6 +381,7 @@ export function pathToFileURL(_absPath: string, normalize?: boolean): string {
 			: "file:///";
 
 	absPath = filePrefix + absPath;
+
 	return encodeURI(absPath);
 }
 
@@ -493,6 +504,7 @@ export function multiGlob(patterns: string[], opts?: any): Promise<string[]> {
 		}),
 	).then((results) => {
 		const set = new Set<string>();
+
 		for (let paths of results) {
 			for (let p of paths) {
 				set.add(p);
@@ -500,7 +512,9 @@ export function multiGlob(patterns: string[], opts?: any): Promise<string[]> {
 		}
 
 		let array = [];
+
 		set.forEach((v) => array.push(fixDriveLetterAndSlashes(v)));
+
 		return array;
 	});
 }
@@ -541,8 +555,11 @@ export class ReverseHandles<T> extends Handles<T> {
  */
 export function pathToRegex(aPath: string): string {
 	const fileUrlPrefix = "file:///";
+
 	const isFileUrl = aPath.startsWith(fileUrlPrefix);
+
 	const isAbsolutePath = isAbsolute(aPath);
+
 	if (isFileUrl) {
 		// Purposely avoiding fileUrlToPath/pathToFileUrl for this, because it does decodeURI/encodeURI
 		// for special URL chars and I don't want to think about that interacting with special regex chars.
@@ -564,7 +581,9 @@ export function pathToRegex(aPath: string): string {
 			/(^|file:\\\/\\\/\\\/)([a-zA-Z]):/g,
 			(match, prefix, letter) => {
 				const u = letter.toUpperCase();
+
 				const l = letter.toLowerCase();
+
 				return `${prefix}[${u}${l}]:`;
 			},
 		);
@@ -606,6 +625,7 @@ export function escapeRegexSpecialChars(str: string, except?: string): string {
 		.replace(/[\\\]]/g, "\\$&");
 
 	const r = new RegExp(`[${useRegexChars}]`, "g");
+
 	return str.replace(r, "\\$&");
 }
 
@@ -624,7 +644,9 @@ function blackboxNegativeLookaheadPattern(aPath: string): string {
 export function makeRegexNotMatchPath(regex: RegExp, aPath: string): RegExp {
 	if (regex.test(aPath)) {
 		const regSourceWithoutCaret = regex.source.replace(/^\^/, "");
+
 		const source = `^${blackboxNegativeLookaheadPattern(aPath)}.*(${regSourceWithoutCaret})`;
+
 		return new RegExp(source, "i");
 	} else {
 		return regex;
@@ -633,8 +655,10 @@ export function makeRegexNotMatchPath(regex: RegExp, aPath: string): RegExp {
 
 export function makeRegexMatchPath(regex: RegExp, aPath: string): RegExp {
 	const negativePattern = blackboxNegativeLookaheadPattern(aPath);
+
 	if (regex.source.indexOf(negativePattern) >= 0) {
 		const newSource = regex.source.replace(negativePattern, "");
+
 		return new RegExp(newSource, "i");
 	} else {
 		return regex;
@@ -669,7 +693,9 @@ export interface PromiseDefer<T> {
 
 export function promiseDefer<T>(): PromiseDefer<T> {
 	let resolveCallback;
+
 	let rejectCallback;
+
 	const promise = new Promise<void>((resolve, reject) => {
 		resolveCallback = resolve;
 		rejectCallback = reject;
@@ -684,12 +710,15 @@ export function calculateElapsedTime(
 	startProcessingTime: HighResTimer,
 ): number {
 	const NanoSecondsPerMillisecond = 1000000;
+
 	const NanoSecondsPerSecond = 1e9;
 
 	const ellapsedTime = process.hrtime(startProcessingTime);
+
 	const ellapsedMilliseconds =
 		(ellapsedTime[0] * NanoSecondsPerSecond + ellapsedTime[1]) /
 		NanoSecondsPerMillisecond;
+
 	return ellapsedMilliseconds;
 }
 
@@ -704,11 +733,13 @@ export function fillErrorDetails(
 	e: any,
 ): void {
 	properties.exceptionMessage = e.message || e.toString();
+
 	if (e.name) {
 		properties.exceptionName = e.name;
 	}
 	if (typeof e.stack === "string") {
 		let unsanitizedStack = e.stack;
+
 		try {
 			// We remove the file path, we just leave the file names
 			unsanitizedStack = unsanitizedStack.replace(

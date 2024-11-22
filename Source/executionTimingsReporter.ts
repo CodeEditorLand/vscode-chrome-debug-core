@@ -118,6 +118,7 @@ export class StepProgressEventsEmitter
 		this._nestedEmitters.forEach((nestedEmitter) =>
 			nestedEmitter.on(event as any, listener as any),
 		);
+
 		return this;
 	}
 
@@ -129,6 +130,7 @@ export class StepProgressEventsEmitter
 		this._nestedEmitters.forEach((nestedEmitter) =>
 			nestedEmitter.removeListener(event as any, listener as any),
 		);
+
 		return this;
 	}
 }

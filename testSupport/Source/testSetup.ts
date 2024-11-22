@@ -13,7 +13,9 @@ const LoggingReporter = require("./loggingReporter");
 // LoggingReporter.alwaysDumpLogs = true;
 
 let unhandledAdapterErrors: string[];
+
 const origTest = test;
+
 const checkLogTest = (
 	title: string,
 	testCallback?: any,
@@ -29,10 +31,12 @@ const checkLogTest = (
 		return new Promise((resolve, reject) => {
 			const optionalCallback = (e) => {
 				if (e) reject(e);
+
 				else resolve();
 			};
 
 			const maybeP = testCallback(optionalCallback);
+
 			if (maybeP && maybeP.then) {
 				maybeP.then(resolve, reject);
 			}
@@ -47,6 +51,7 @@ const checkLogTest = (
 					unhandledAdapterErrors.length === 1
 						? unhandledAdapterErrors[0]
 						: JSON.stringify(unhandledAdapterErrors);
+
 				throw new Error(errStr);
 			}
 		});
@@ -62,9 +67,11 @@ function log(e: DebugProtocol.OutputEvent): void {
 	if (e.body.category === "telemetry") return;
 
 	const timestamp = new Date().toISOString().split(/[TZ]/)[1];
+
 	const outputBody = e.body.output
 		? e.body.output.trim()
 		: "variablesReference: " + e.body.variablesReference;
+
 	const msg = ` ${timestamp} ${outputBody}`;
 	LoggingReporter.logEE.emit("log", msg);
 
@@ -77,7 +84,9 @@ let dc: ExtendedDebugClient;
 function patchLaunchFn(patchLaunchArgsCb: PatchLaunchArgsCb): void {
 	function patchLaunchArgs(launchArgs): Promise<void> {
 		launchArgs.trace = "verbose";
+
 		const patchReturnVal = patchLaunchArgsCb(launchArgs);
+
 		return patchReturnVal || Promise.resolve();
 	}
 
@@ -107,6 +116,7 @@ export interface ISetupOpts {
 export function setup(opts: ISetupOpts): Promise<ExtendedDebugClient> {
 	unhandledAdapterErrors = [];
 	dc = new ExtendedDebugClient("node", opts.entryPoint, opts.type);
+
 	if (opts.patchLaunchArgs) {
 		patchLaunchFn(opts.patchLaunchArgs);
 	}
@@ -119,5 +129,6 @@ export function setup(opts: ISetupOpts): Promise<ExtendedDebugClient> {
 
 export function teardown(): Promise<void> {
 	dc.removeListener("output", log);
+
 	return dc.stop();
 }

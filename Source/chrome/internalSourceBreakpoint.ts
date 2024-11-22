@@ -20,6 +20,7 @@ export class InternalSourceBreakpoint {
 
 		if (breakpoint.logMessage) {
 			this.condition = logMessageToExpression(breakpoint.logMessage);
+
 			if (breakpoint.condition) {
 				this.condition = `(${breakpoint.condition}) && ${this.condition}`;
 			}
@@ -56,10 +57,13 @@ function logMessageToExpression(msg: string): string {
 	msg = msg.replace("%", "%%");
 
 	const args: string[] = [];
+
 	let format = msg.replace(LOGMESSAGE_VARIABLE_REGEXP, (match, group) => {
 		const a = group.trim();
+
 		if (a) {
 			args.push(`(${a})`);
+
 			return "%O";
 		} else {
 			return "";
@@ -69,5 +73,6 @@ function logMessageToExpression(msg: string): string {
 	format = format.replace("'", "\\'");
 
 	const argStr = args.length ? `, ${args.join(", ")}` : "";
+
 	return `console.log('${format}'${argStr});\n//# sourceURL=${InternalSourceBreakpoint.LOGPOINT_URL}`;
 }

@@ -106,6 +106,7 @@ export class BreakOnLoadHelper {
 					await this.handleStopOnEntryBreakpointAndContinue(
 						notification,
 					);
+
 				return shouldContinue;
 			}
 		} else if (this.isInstrumentationPause(notification)) {
@@ -119,11 +120,13 @@ export class BreakOnLoadHelper {
 			logger.log(
 				"BreakOnLoadHelper: Finished waiting for breakpoints to get resolved.",
 			);
+
 			let shouldContinue =
 				this._doesDOMInstrumentationRecieveExtraEvent ||
 				(await this.handleStopOnEntryBreakpointAndContinue(
 					notification,
 				));
+
 			return shouldContinue;
 		}
 
@@ -172,6 +175,7 @@ export class BreakOnLoadHelper {
 			this._chromeDebugAdapter.committedBreakpointsByUrl.get(
 				pausedScriptUrl,
 			) || [];
+
 		const anyBreakpointsAtPausedLocation =
 			committedBps.filter(
 				(bp) =>
@@ -200,11 +204,14 @@ export class BreakOnLoadHelper {
 		notification: Crdp.Debugger.PausedEvent,
 	): Promise<boolean> {
 		const hitBreakpoints = notification.hitBreakpoints;
+
 		let allStopOnEntryBreakpoints = true;
 
 		const pausedScriptId = notification.callFrames[0].location.scriptId;
+
 		const pausedScriptUrl =
 			this._chromeDebugAdapter.scriptsById.get(pausedScriptId).url;
+
 		const mappedUrl =
 			await this._chromeDebugAdapter.pathTransformer.scriptParsed(
 				pausedScriptUrl,
@@ -215,11 +222,13 @@ export class BreakOnLoadHelper {
 		for (let bp of hitBreakpoints) {
 			let regexAndFileNames =
 				this._stopOnEntryBreakpointIdToRequestedFileName.get(bp);
+
 			if (!regexAndFileNames) {
 				notification.hitBreakpoints = [bp];
 				allStopOnEntryBreakpoints = false;
 			} else {
 				const normalizedMappedUrl = utils.canonicalizeUrl(mappedUrl);
+
 				if (regexAndFileNames.fileSet.has(normalizedMappedUrl)) {
 					regexAndFileNames.fileSet.delete(normalizedMappedUrl);
 					assert(
@@ -258,10 +267,12 @@ export class BreakOnLoadHelper {
 
 		if (allStopOnEntryBreakpoints) {
 			const pausedLocation = notification.callFrames[0].location;
+
 			let shouldContinue =
 				await this.shouldContinueOnStopOnEntryBreakpoint(
 					pausedLocation,
 				);
+
 			if (shouldContinue) {
 				return true;
 			}
@@ -281,16 +292,19 @@ export class BreakOnLoadHelper {
 		if (!this._stopOnEntryRequestedFileNameToBreakpointId.has(url)) {
 			// Generate regex we need for the file
 			const normalizedUrl = utils.canonicalizeUrl(url);
+
 			const urlRegex =
 				ChromeUtils.getUrlRegexForBreakOnLoad(normalizedUrl);
 
 			// Check if we already have a breakpoint for this regexp since two different files like script.ts and script.js may have the same regexp
 			let breakpointId: string;
+
 			breakpointId = this._stopOnEntryRegexToBreakpointId.get(urlRegex);
 
 			// If breakpointId is undefined it means the breakpoint doesn't exist yet so we add it
 			if (breakpointId === undefined) {
 				let result;
+
 				try {
 					result = await this.setStopOnEntryBreakpoint(urlRegex);
 				} catch (e) {
@@ -388,6 +402,7 @@ export class BreakOnLoadHelper {
 				lineNumber: 0,
 				columnNumber: 0,
 			});
+
 		return result;
 	}
 

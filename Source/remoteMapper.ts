@@ -8,11 +8,13 @@ import { DebugProtocol } from "vscode-debugprotocol";
 import { URI } from "vscode-uri";
 
 const remoteUriScheme = "vscode-remote";
+
 const remotePathComponent = "__vscode-remote-uri__";
 
 const isWindows = process.platform === "win32";
 function getFsPath(uri: URI): string {
 	const fsPath = uri.fsPath;
+
 	return isWindows && !fsPath.match(/^[a-zA-Z]:/)
 		? fsPath.replace(/\\/g, "/") // Hack - undo the slash normalization that URI does when windows is the current platform
 		: fsPath;
@@ -21,9 +23,13 @@ function getFsPath(uri: URI): string {
 export function mapRemoteClientToInternalPath(remoteUri: string): string {
 	if (remoteUri.startsWith(remoteUriScheme + ":")) {
 		const uri = URI.parse(remoteUri);
+
 		const uriPath = getFsPath(uri);
+
 		const driveLetterMatch = uriPath.match(/^[A-Za-z]:/);
+
 		let internalPath: string;
+
 		if (!!driveLetterMatch) {
 			internalPath = path.win32.join(
 				driveLetterMatch[0],
@@ -37,6 +43,7 @@ export function mapRemoteClientToInternalPath(remoteUri: string): string {
 		logger.log(
 			`remoteMapper: mapping remote uri ${remoteUri} to internal path: ${internalPath}`,
 		);
+
 		return internalPath;
 	} else {
 		return remoteUri;

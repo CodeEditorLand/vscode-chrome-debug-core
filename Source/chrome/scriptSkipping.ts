@@ -32,6 +32,7 @@ export class ScriptSkipper {
 					logger.warn(
 						`Warning: skipFiles entries starting with '!' aren't supported and will be ignored. ("${glob}")`,
 					);
+
 					return false;
 				}
 
@@ -68,24 +69,29 @@ export class ScriptSkipper {
 		const aPath =
 			args.path ||
 			scripts.fakeUrlForSourceReference(args.sourceReference);
+
 		const generatedPath =
 			await transformers.sourceMapTransformer.getGeneratedPathFromAuthoredPath(
 				aPath,
 			);
+
 		if (!generatedPath) {
 			logger.log(
 				`Can't toggle the skipFile status for: ${aPath} - haven't seen it yet.`,
 			);
+
 			return;
 		}
 
 		const sources =
 			await transformers.sourceMapTransformer.allSources(generatedPath);
+
 		if (generatedPath === aPath && sources.length) {
 			// Ignore toggling skip status for generated scripts with sources
 			logger.log(
 				`Can't toggle skipFile status for ${aPath} - it's a script with a sourcemap`,
 			);
+
 			return;
 		}
 
@@ -99,6 +105,7 @@ export class ScriptSkipper {
 			transformers.pathTransformer.getTargetPathFromClientPath(
 				generatedPath,
 			) || generatedPath;
+
 		const script = scripts.getScriptByUrl(targetPath);
 
 		await this.resolveSkipFiles(
@@ -123,12 +130,15 @@ export class ScriptSkipper {
 	): Promise<void> {
 		if (sources && sources.length) {
 			const parentIsSkipped = this.shouldSkipSource(script.url);
+
 			const libPositions: Crdp.Debugger.ScriptPosition[] = [];
 
 			// Figure out skip/noskip transitions within script
 			let inLibRange = parentIsSkipped;
+
 			for (let s of sources) {
 				let isSkippedFile = this.shouldSkipSource(s);
+
 				if (typeof isSkippedFile !== "boolean") {
 					// Inherit the parent's status
 					isSkippedFile = parentIsSkipped;
@@ -144,7 +154,9 @@ export class ScriptSkipper {
 						await this._transformers.sourceMapTransformer.allSourcePathDetails(
 							mappedUrl,
 						);
+
 					const detail = details.find((d) => d.inferredPath === s);
+
 					if (detail.startPosition) {
 						libPositions.push({
 							lineNumber: detail.startPosition.line,
@@ -191,7 +203,9 @@ export class ScriptSkipper {
 			}
 		} else {
 			const status = await this.getSkipStatus(mappedUrl);
+
 			const skippedByPattern = this.matchesSkipFilesPatterns(mappedUrl);
+
 			if (typeof status === "boolean" && status !== skippedByPattern) {
 				const positions = status
 					? [{ lineNumber: 0, columnNumber: 0 }]
@@ -209,6 +223,7 @@ export class ScriptSkipper {
 		this._blackboxedRegexes = this._blackboxedRegexes.map((regex) => {
 			const result = utils.makeRegexNotMatchPath(regex, noSkipPath);
 			somethingChanged = somethingChanged || result !== regex;
+
 			return result;
 		});
 
@@ -222,6 +237,7 @@ export class ScriptSkipper {
 		this._blackboxedRegexes = this._blackboxedRegexes.map((regex) => {
 			const result = utils.makeRegexMatchPath(regex, skipPath);
 			somethingChanged = somethingChanged || result !== regex;
+
 			return result;
 		});
 
@@ -246,6 +262,7 @@ export class ScriptSkipper {
 	 */
 	public shouldSkipSource(sourcePath: string): boolean | undefined {
 		const status = this.getSkipStatus(sourcePath);
+
 		if (typeof status === "boolean") {
 			return status;
 		}

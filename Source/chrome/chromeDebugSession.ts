@@ -136,6 +136,7 @@ export class ChromeDebugSession
 
 		const safeGetErrDetails = (err) => {
 			let errMsg;
+
 			try {
 				errMsg =
 					err && (<Error>err).stack
@@ -196,6 +197,7 @@ export class ChromeDebugSession
 			`ClientRequest/${request.command}`,
 			async (reportFailure, telemetryPropertyCollector) => {
 				const response: DebugProtocol.Response = new Response(request);
+
 				try {
 					logger.verbose(
 						`From client: ${request.command}(${JSON.stringify(request.arguments)})`,
@@ -242,12 +244,16 @@ export class ChromeDebugSession
 		) => Promise<void>,
 	): Promise<void> {
 		const startProcessingTime = process.hrtime();
+
 		const startTime = Date.now();
+
 		const isSequentialRequest =
 			eventName === "ClientRequest/initialize" ||
 			eventName === "ClientRequest/launch" ||
 			eventName === "ClientRequest/attach";
+
 		const properties: IExecutionResultTelemetryProperties = {};
+
 		const telemetryPropertyCollector = new TelemetryPropertyCollector();
 
 		if (isSequentialRequest) {
@@ -261,6 +267,7 @@ export class ChromeDebugSession
 				utils.calculateElapsedTime(startProcessingTime);
 			properties.timeTakenInMilliseconds =
 				timeTakenInMilliseconds.toString();
+
 			if (isSequentialRequest) {
 				this.events.emitStepCompleted(eventName);
 			} else {
@@ -290,6 +297,7 @@ export class ChromeDebugSession
 
 		// We use the reportFailure callback because the client might exit immediately after the first failed request, so we need to send the telemetry before that, if not it might get dropped
 		await action(reportFailure, telemetryPropertyCollector);
+
 		if (!failed) {
 			properties.successful = "true";
 			sendTelemetry();
@@ -310,6 +318,7 @@ export class ChromeDebugSession
 	): void {
 		if (isMessage(error)) {
 			this.sendErrorResponse(response, error as DebugProtocol.Message);
+
 			return;
 		}
 
@@ -319,6 +328,7 @@ export class ChromeDebugSession
 			response.message = error ? error.message : "Unknown error";
 			response.success = false;
 			this.sendResponse(response);
+
 			return;
 		}
 
@@ -366,10 +376,12 @@ export class ChromeDebugSession
 	): void {
 		if (!this.haveTimingsWhileStartingUpBeenReported) {
 			const report = this.reporter.generateReport();
+
 			const telemetryData = {
 				RequestedContentWasDetected:
 					requestedContentWasDetected.toString(),
 			} as { [key: string]: string };
+
 			for (const reportProperty in report) {
 				telemetryData[reportProperty] = JSON.stringify(
 					report[reportProperty],
@@ -428,11 +440,13 @@ export class ChromeDebugSession
 			/*requestedContentWasDetected*/ false,
 			/*reasonForNotDetected*/ "shutdown",
 		);
+
 		super.shutdown();
 	}
 
 	public sendResponse(response: DebugProtocol.Response): void {
 		const originalLogVerbose = logger.verbose;
+
 		try {
 			logger.verbose = (textToLog) => {
 				if (
@@ -445,6 +459,7 @@ export class ChromeDebugSession
 					clonedResponse.body = Object.assign({}, response.body);
 					clonedResponse.body.content =
 						"<removed script source for logs>";
+
 					return originalLogVerbose.call(
 						logger,
 						`To client: ${JSON.stringify(clonedResponse)}`,
@@ -453,6 +468,7 @@ export class ChromeDebugSession
 					return originalLogVerbose.call(logger, textToLog);
 				}
 			};
+
 			super.sendResponse(response);
 		} finally {
 			logger.verbose = originalLogVerbose;
@@ -463,6 +479,7 @@ export class ChromeDebugSession
 function logVersionInfo(): void {
 	logger.log(`OS: ${os.platform()} ${os.arch()}`);
 	logger.log(`Adapter node: ${process.version} ${process.arch}`);
+
 	const coreVersion = require("../../../package.json").version;
 	logger.log("vscode-chrome-debug-core: " + coreVersion);
 

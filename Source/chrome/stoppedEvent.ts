@@ -31,6 +31,7 @@ export class StoppedEvent2 extends StoppedEvent {
 			exception &&
 			exception.description &&
 			utils.firstLine(exception.description);
+
 		super(reason, threadId, exceptionText);
 
 		switch (reason) {
@@ -39,13 +40,17 @@ export class StoppedEvent2 extends StoppedEvent {
 					"reason.description.step",
 					"Paused on step",
 				);
+
 				break;
+
 			case "breakpoint":
 				(<DebugProtocol.StoppedEvent>this).body.description = localize(
 					"reason.description.breakpoint",
 					"Paused on breakpoint",
 				);
+
 				break;
+
 			case "exception":
 				const uncaught = exception && (<any>exception).uncaught; // Currently undocumented
 				if (typeof uncaught === "undefined") {
@@ -68,40 +73,52 @@ export class StoppedEvent2 extends StoppedEvent {
 						);
 				}
 				break;
+
 			case "pause":
 				(<DebugProtocol.StoppedEvent>this).body.description = localize(
 					"reason.description.user_request",
 					"Paused on user request",
 				);
+
 				break;
+
 			case "entry":
 				(<DebugProtocol.StoppedEvent>this).body.description = localize(
 					"reason.description.entry",
 					"Paused on entry",
 				);
+
 				break;
+
 			case "debugger_statement":
 				(<DebugProtocol.StoppedEvent>this).body.description = localize(
 					"reason.description.debugger_statement",
 					"Paused on debugger statement",
 				);
+
 				break;
+
 			case "frame_entry":
 				(<DebugProtocol.StoppedEvent>this).body.description = localize(
 					"reason.description.restart",
 					"Paused on frame entry",
 				);
+
 				break;
+
 			case "promise_rejection":
 				(<DebugProtocol.StoppedEvent>this).body.description = localize(
 					"reason.description.promiseRejection",
 					"Paused on promise rejection",
 				);
 				this.body.reason = "exception";
+
 				break;
+
 			default:
 				(<DebugProtocol.StoppedEvent>this).body.description =
 					"Unknown pause reason";
+
 				break;
 		}
 	}

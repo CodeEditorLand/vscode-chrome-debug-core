@@ -131,6 +131,7 @@ export class BaseSourceMapTransformer {
 			const handle = this._scriptContainer.getSource(
 				args.source.sourceReference,
 			);
+
 			if (handle && handle.mappedPath) {
 				args.source.path = handle.mappedPath;
 			}
@@ -138,8 +139,10 @@ export class BaseSourceMapTransformer {
 
 		if (args.source.path) {
 			const argsPath = args.source.path;
+
 			const mappedPath =
 				this._sourceMaps.getGeneratedPathFromAuthoredPath(argsPath);
+
 			if (mappedPath) {
 				logger.log(
 					`SourceMaps.setBP: Mapped ${argsPath} to ${mappedPath}`,
@@ -150,11 +153,13 @@ export class BaseSourceMapTransformer {
 				// DebugProtocol doesn't send cols yet, but they need to be added from sourcemaps
 				args.breakpoints.forEach((bp) => {
 					const { line, column = 0 } = bp;
+
 					const mapped = this._sourceMaps.mapToGenerated(
 						argsPath,
 						line,
 						column,
 					);
+
 					if (mapped) {
 						logger.log(
 							`SourceMaps.setBP: Mapped ${argsPath}:${line + 1}:${column + 1} to ${mappedPath}:${mapped.line + 1}:${mapped.column + 1}`,
@@ -186,6 +191,7 @@ export class BaseSourceMapTransformer {
 
 						const sourceBPs =
 							this._authoredPathsToMappedBPs.get(sourcePath);
+
 						if (sourceBPs) {
 							// Don't modify the cached array
 							args.breakpoints =
@@ -197,6 +203,7 @@ export class BaseSourceMapTransformer {
 								this._authoredPathsToClientBreakpointIds.get(
 									sourcePath,
 								);
+
 							if (ids) {
 								ids = ids.concat(clientBreakpointIds);
 							}
@@ -239,6 +246,7 @@ export class BaseSourceMapTransformer {
 			this._requestSeqToSetBreakpointsArgs.has(requestSeq)
 		) {
 			const args = this._requestSeqToSetBreakpointsArgs.get(requestSeq);
+
 			if (args.authoredPath) {
 				// authoredPath is set, so the file was mapped to source.
 				// Remove breakpoints from files that map to the same file, and map back to source.
@@ -254,6 +262,7 @@ export class BaseSourceMapTransformer {
 						bp.line,
 						bp.column,
 					);
+
 					if (mapped) {
 						logger.log(
 							`SourceMaps.setBP: Mapped ${args.generatedPath}:${bp.line + 1}:${bp.column + 1} to ${mapped.source}:${mapped.line + 1}`,
@@ -264,6 +273,7 @@ export class BaseSourceMapTransformer {
 						logger.log(
 							`SourceMaps.setBP: Can't map ${args.generatedPath}:${bp.line + 1}:${bp.column + 1}, keeping original line numbers.`,
 						);
+
 						if (args.originalBPs[i]) {
 							bp.line = args.originalBPs[i].line;
 							bp.column = args.originalBPs[i].column;
@@ -286,6 +296,7 @@ export class BaseSourceMapTransformer {
 	): Promise<void> {
 		if (this._sourceMaps) {
 			await this._processingNewSourceMap;
+
 			for (let stackFrame of response.stackFrames) {
 				await this.fixSourceLocation(stackFrame);
 			}
@@ -310,6 +321,7 @@ export class BaseSourceMapTransformer {
 			sourceLocation.line,
 			sourceLocation.column,
 		);
+
 		if (
 			mapped &&
 			(isInternalRemotePath(mapped.source) ||
@@ -322,10 +334,12 @@ export class BaseSourceMapTransformer {
 			sourceLocation.line = mapped.line;
 			sourceLocation.column = mapped.column;
 			sourceLocation.isSourceMapped = true;
+
 			return;
 		}
 		const inlinedSource =
 			mapped && this._sourceMaps.sourceContentFor(mapped.source);
+
 		if (mapped && inlinedSource) {
 			// Clear the path and set the sourceReference - the client will ask for
 			// the source later and it will be returned from the sourcemap
@@ -343,12 +357,14 @@ export class BaseSourceMapTransformer {
 			sourceLocation.line = mapped.line;
 			sourceLocation.column = mapped.column;
 			sourceLocation.isSourceMapped = true;
+
 			return;
 		}
 		if (utils.existsSync(sourceLocation.source.path)) {
 			// Script could not be mapped, but does exist on disk. Keep it and clear the sourceReference.
 			sourceLocation.source.sourceReference = undefined;
 			sourceLocation.source.origin = undefined;
+
 			return;
 		}
 	}
@@ -379,6 +395,7 @@ export class BaseSourceMapTransformer {
 			await processNewSourceMapP;
 
 			const sources = this._sourceMaps.allMappedSources(pathToGenerated);
+
 			if (sources) {
 				logger.log(
 					`SourceMaps.scriptParsed: ${pathToGenerated} was just loaded and has mapped sources: ${JSON.stringify(sources)}`,
@@ -401,6 +418,7 @@ export class BaseSourceMapTransformer {
 				bp.line,
 				bp.column,
 			);
+
 			if (mapped) {
 				// No need to send back the path, the bp can only move within its script
 				bp.line = mapped.line;
@@ -440,6 +458,7 @@ export class BaseSourceMapTransformer {
 			scope.line,
 			scope.column,
 		);
+
 		let shiftedScopeStartForward = false;
 
 		// If the scope is an async function, then the function declaration line may be missing a source mapping.
@@ -460,8 +479,10 @@ export class BaseSourceMapTransformer {
 				scope.endLine,
 				scope.endColumn,
 			);
+
 			if (mappedEnd) {
 				scope.line = mappedStart.line;
+
 				if (shiftedScopeStartForward) {
 					scope.line--;
 				}
@@ -481,6 +502,7 @@ export class BaseSourceMapTransformer {
 		if (!this._sourceMaps) return null;
 
 		await this.wait();
+
 		return this._sourceMaps.mapToGenerated(authoredPath, line, column);
 	}
 
@@ -492,6 +514,7 @@ export class BaseSourceMapTransformer {
 		if (!this._sourceMaps) return null;
 
 		await this.wait();
+
 		return this._sourceMaps.mapToAuthored(pathToGenerated, line, column);
 	}
 
@@ -513,6 +536,7 @@ export class BaseSourceMapTransformer {
 		if (!this._sourceMaps) return [];
 
 		await this.wait();
+
 		return this._sourceMaps.allMappedSources(pathToGenerated) || [];
 	}
 
@@ -522,6 +546,7 @@ export class BaseSourceMapTransformer {
 		if (!this._sourceMaps) return [];
 
 		await this.wait();
+
 		return this._sourceMaps.allSourcePathDetails(pathToGenerated) || [];
 	}
 

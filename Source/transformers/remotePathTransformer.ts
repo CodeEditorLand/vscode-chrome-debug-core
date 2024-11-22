@@ -29,11 +29,13 @@ export class RemotePathTransformer extends UrlPathTransformer {
 
 	public async launch(args: ILaunchRequestArgs): Promise<void> {
 		await super.launch(args);
+
 		return this.init(args);
 	}
 
 	public async attach(args: IAttachRequestArgs): Promise<void> {
 		await super.attach(args);
+
 		return this.init(args);
 	}
 
@@ -55,8 +57,10 @@ export class RemotePathTransformer extends UrlPathTransformer {
 
 		// Validate that localRoot is absolute and exists
 		let localRootP = Promise.resolve();
+
 		if (args.localRoot) {
 			const localRoot = args.localRoot;
+
 			if (!path.isAbsolute(localRoot)) {
 				return Promise.reject(
 					errors.attributePathRelative("localRoot", localRoot),
@@ -107,9 +111,11 @@ export class RemotePathTransformer extends UrlPathTransformer {
 		await super.fixSource(source);
 
 		const remotePath = source && source.path;
+
 		if (remotePath) {
 			const localPath =
 				this.getClientPathFromTargetPath(remotePath) || remotePath;
+
 			if (utils.existsSync(localPath)) {
 				source.path = localPath;
 				source.sourceReference = undefined;
@@ -135,23 +141,28 @@ export class RemotePathTransformer extends UrlPathTransformer {
 
 		// Map as non-file-uri because remoteRoot won't expect a file uri
 		remotePath = utils.fileUrlToPath(remotePath);
+
 		if (!this.shouldMapPaths(remotePath)) return "";
 
 		const relPath = relative(this._remoteRoot, remotePath);
+
 		if (relPath.startsWith("../")) return "";
 
 		let localPath = join(this._localRoot, relPath);
 
 		localPath = utils.fixDriveLetterAndSlashes(localPath);
 		logger.log(`Mapped remoteToLocal: ${remotePath} -> ${localPath}`);
+
 		return localPath;
 	}
 
 	public getTargetPathFromClientPath(localPath: string): string {
 		localPath = super.getTargetPathFromClientPath(localPath) || localPath;
+
 		if (!this.shouldMapPaths(localPath)) return localPath;
 
 		const relPath = relative(this._localRoot, localPath);
+
 		if (relPath.startsWith("../")) return "";
 
 		let remotePath = join(this._remoteRoot, relPath);
@@ -161,6 +172,7 @@ export class RemotePathTransformer extends UrlPathTransformer {
 			/*uppercaseDriveLetter=*/ true,
 		);
 		logger.log(`Mapped localToRemote: ${localPath} -> ${remotePath}`);
+
 		return remotePath;
 	}
 }

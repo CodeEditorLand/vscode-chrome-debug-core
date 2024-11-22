@@ -48,6 +48,7 @@ export class ScriptContainer {
 	 */
 	public getScriptByUrl(url: string) {
 		const canonUrl = utils.canonicalizeUrl(url);
+
 		return (
 			this._scriptsByUrl.get(canonUrl) ||
 			this._scriptsByUrl.get(utils.fixDriveLetter(canonUrl))
@@ -90,6 +91,7 @@ export class ScriptContainer {
 		sourceMapTransformer: BaseSourceMapTransformer,
 	): Promise<string> {
 		const runtimeScripts = Array.from(this._scriptsByUrl.keys()).sort();
+
 		return Promise.all(
 			runtimeScripts.map((script) =>
 				this.getOneScriptString(
@@ -112,8 +114,10 @@ export class ScriptContainer {
 		sourceMapTransformer: BaseSourceMapTransformer,
 	): Promise<string> {
 		let result = "› " + runtimeScriptPath;
+
 		const clientPath =
 			pathTransformer.getClientPathFromTargetPath(runtimeScriptPath);
+
 		if (clientPath && clientPath !== runtimeScriptPath)
 			result += ` (${clientPath})`;
 
@@ -126,6 +130,7 @@ export class ScriptContainer {
 							`    - ${details.originalPath} (${details.inferredPath})`,
 					)
 					.join("\n");
+
 				if (sourcePathDetails.length)
 					mappedSourcesStr = "\n" + mappedSourcesStr;
 
@@ -173,7 +178,9 @@ export class ScriptContainer {
 		const sourceReference = this.getSourceReferenceForScriptId(
 			script.scriptId,
 		);
+
 		const properlyCasedScriptUrl = utils.canonicalizeUrl(script.url);
+
 		const displayPath = this.realPathToDisplayPath(properlyCasedScriptUrl);
 
 		const exists = await utils.existsAsync(properlyCasedScriptUrl); // script.url can start with file:/// so we use the canonicalized version
@@ -202,11 +209,13 @@ export class ScriptContainer {
 
 	public fakeUrlForSourceReference(sourceReference: number): string {
 		const handle = this._sourceHandles.get(sourceReference);
+
 		return `${ChromeUtils.EVAL_NAME_PREFIX}${handle.scriptId}`;
 	}
 
 	public displayNameForSourceReference(sourceReference: number): string {
 		const handle = this._sourceHandles.get(sourceReference);
+
 		return (
 			(handle && this.displayNameForScriptId(handle.scriptId)) ||
 			sourceReference + ""

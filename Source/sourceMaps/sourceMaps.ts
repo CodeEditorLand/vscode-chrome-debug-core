@@ -34,6 +34,7 @@ export class SourceMaps {
 	 */
 	public getGeneratedPathFromAuthoredPath(authoredPath: string): string {
 		authoredPath = authoredPath.toLowerCase();
+
 		return this._authoredPathToSourceMap.has(authoredPath)
 			? this._authoredPathToSourceMap.get(authoredPath).generatedPath()
 			: null;
@@ -45,6 +46,7 @@ export class SourceMaps {
 		column: number,
 	): MappedPosition {
 		authoredPath = authoredPath.toLowerCase();
+
 		return this._authoredPathToSourceMap.has(authoredPath)
 			? this._authoredPathToSourceMap
 					.get(authoredPath)
@@ -58,6 +60,7 @@ export class SourceMaps {
 		column: number,
 	): MappedPosition {
 		pathToGenerated = pathToGenerated.toLowerCase();
+
 		return this._generatedPathToSourceMap.has(pathToGenerated)
 			? this._generatedPathToSourceMap
 					.get(pathToGenerated)
@@ -67,6 +70,7 @@ export class SourceMaps {
 
 	public allMappedSources(pathToGenerated: string): string[] {
 		pathToGenerated = pathToGenerated.toLowerCase();
+
 		return this._generatedPathToSourceMap.has(pathToGenerated)
 			? this._generatedPathToSourceMap.get(pathToGenerated)
 					.authoredSources
@@ -75,6 +79,7 @@ export class SourceMaps {
 
 	public allSourcePathDetails(pathToGenerated: string): ISourcePathDetails[] {
 		pathToGenerated = pathToGenerated.toLowerCase();
+
 		return this._generatedPathToSourceMap.has(pathToGenerated)
 			? this._generatedPathToSourceMap.get(pathToGenerated)
 					.allSourcePathDetails
@@ -83,6 +88,7 @@ export class SourceMaps {
 
 	public sourceContentFor(authoredPath: string): string {
 		authoredPath = authoredPath.toLowerCase();
+
 		return this._authoredPathToSourceMap.has(authoredPath)
 			? this._authoredPathToSourceMap
 					.get(authoredPath)
@@ -105,6 +111,7 @@ export class SourceMaps {
 			sourceMapURL,
 			isVSClient,
 		);
+
 		if (sourceMap) {
 			this._generatedPathToSourceMap.set(
 				pathToGenerated.toLowerCase(),

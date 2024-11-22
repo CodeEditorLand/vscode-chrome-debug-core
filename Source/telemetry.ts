@@ -43,6 +43,7 @@ const prefixTelemetryKeys: ReadonlyArray<
 
 export interface ITelemetryReporter {
 	reportEvent(name: string, data?: any): void;
+
 	setupEventHandler(_sendEvent: (event: DebugProtocol.Event) => void): void;
 }
 
@@ -60,6 +61,7 @@ export class TelemetryReporter implements ITelemetryReporter {
 			this._globalTelemetryProperties,
 			data,
 		);
+
 		for (const key of prefixTelemetryKeys) {
 			if (combinedData.hasOwnProperty(key)) {
 				combinedData[`!${key}`] = combinedData[key];
@@ -199,6 +201,7 @@ export class BatchTelemetryReporter {
 	private send(): void {
 		for (const eventName in this._eventBuckets) {
 			const bucket = this._eventBuckets[eventName];
+
 			let properties = BatchTelemetryReporter.transfromBucketData(bucket);
 			this._telemetryReporter.reportEvent(eventName, properties);
 		}
@@ -234,6 +237,7 @@ export class BatchTelemetryReporter {
 			BatchTelemetryReporter.collectPropertyNamesFromAllEvents(
 				bucketForEventType,
 			);
+
 		let properties = {};
 
 		// Create a holder for all potential property names.
@@ -280,6 +284,7 @@ export class BatchTelemetryReporter {
 	 */
 	private static collectPropertyNamesFromAllEvents(bucket: any[]): string[] {
 		let propertyNamesSet = {};
+
 		for (const entry of bucket) {
 			for (const key of Object.keys(entry)) {
 				propertyNamesSet[key] = true;

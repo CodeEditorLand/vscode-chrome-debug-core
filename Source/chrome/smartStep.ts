@@ -17,11 +17,13 @@ export class SmartStepper {
 			pathTransformer.getClientPathFromTargetPath(
 				stackFrame.source.path,
 			) || stackFrame.source.path;
+
 		const mapping = await sourceMapTransformer.mapToAuthored(
 			clientPath,
 			stackFrame.line,
 			stackFrame.column,
 		);
+
 		if (mapping) {
 			return false;
 		}

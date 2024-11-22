@@ -26,11 +26,13 @@ export class UrlPathTransformer extends BasePathTransformer {
 
 	public launch(args: ILaunchRequestArgs): Promise<void> {
 		this._pathMapping = args.pathMapping;
+
 		return super.launch(args);
 	}
 
 	public attach(args: IAttachRequestArgs): Promise<void> {
 		this._pathMapping = args.pathMapping;
+
 		return super.attach(args);
 	}
 
@@ -43,20 +45,25 @@ export class UrlPathTransformer extends BasePathTransformer {
 		if (utils.isURL(source.path)) {
 			// already a url, use as-is
 			logger.log(`Paths.setBP: ${source.path} is already a URL`);
+
 			return source;
 		}
 
 		const path = utils.canonicalizeUrl(source.path);
+
 		const url = this.getTargetPathFromClientPath(path);
+
 		if (url) {
 			source.path = url;
 			logger.log(`Paths.setBP: Resolved ${path} to ${source.path}`);
+
 			return source;
 		} else {
 			logger.log(
 				`Paths.setBP: No target url cached yet for client path: ${path}.`,
 			);
 			source.path = path;
+
 			return source;
 		}
 	}
@@ -80,6 +87,7 @@ export class UrlPathTransformer extends BasePathTransformer {
 			logger.log(
 				`Paths.scriptParsed: resolved ${scriptUrl} to ${clientPath}. pathMapping/webroot: ${JSON.stringify(this._pathMapping)}`,
 			);
+
 			const canonicalizedClientPath = utils.canonicalizeUrl(clientPath);
 			this._clientPathToTargetUrl.set(canonicalizedClientPath, scriptUrl);
 			this._targetUrlToClientPath.set(scriptUrl, clientPath);

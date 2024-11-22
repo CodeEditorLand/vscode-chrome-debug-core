@@ -49,12 +49,14 @@ export function setBreakpoint(
 					expVerified,
 					"breakpoint verification mismatch: verified",
 				);
+
 			if (typeof expLine === "number")
 				assert.equal(
 					bp.line,
 					expLine,
 					"breakpoint verification mismatch: line",
 				);
+
 			if (typeof expCol === "number")
 				assert.equal(
 					bp.column,
@@ -84,6 +86,7 @@ export class ExtendedDebugClient extends DebugClient {
 		args: DebugProtocol.LoadedSourcesArguments,
 	): Promise<IGetLoadedSourcesResponseBody> {
 		const response = await this.send("loadedSources");
+
 		return response.body;
 	}
 

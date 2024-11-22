@@ -73,6 +73,7 @@ export class StackFrames {
 			);
 
 		const totalFrames = stackFrames.length;
+
 		if (typeof args.startFrame === "number") {
 			stackFrames = stackFrames.slice(args.startFrame);
 		}
@@ -105,6 +106,7 @@ export class StackFrames {
 				// Apply hints to skipped frames
 				const getSkipReason = (reason) =>
 					localize("skipReason", "(skipped by '{0}')", reason);
+
 				if (
 					frame.source.path &&
 					scriptSkipper.shouldSkipSource(frame.source.path)
@@ -168,11 +170,13 @@ export class StackFrames {
 		args: DebugProtocol.ScopesArguments;
 		scripts: ScriptContainer;
 		transformers: Transformers;
+
 		variables: VariablesManager;
 		pauseEvent: Crdp.Debugger.PausedEvent;
 		currentException: any;
 	}): { scopes: DebugProtocol.Scope[] } {
 		const currentFrame = this._frameHandles.get(args.frameId);
+
 		if (
 			!currentFrame ||
 			!currentFrame.location ||
@@ -188,7 +192,9 @@ export class StackFrames {
 		const currentScript = scripts.getScriptById(
 			currentFrame.location.scriptId,
 		);
+
 		const currentScriptUrl = currentScript && currentScript.url;
+
 		const currentScriptPath =
 			(currentScriptUrl &&
 				transformers.pathTransformer.getClientPathFromTargetPath(
@@ -200,7 +206,9 @@ export class StackFrames {
 			(scope: Crdp.Debugger.Scope, i: number) => {
 				// The first scope should include 'this'. Keep the RemoteObject reference for use by the variables request
 				const thisObj = i === 0 && currentFrame.this;
+
 				const returnValue = i === 0 && currentFrame.returnValue;
+
 				const variablesReference = variables.createHandle(
 					new ScopeContainer(
 						currentFrame.callFrameId,
@@ -243,6 +251,7 @@ export class StackFrames {
 		}
 
 		const scopesResponse = { scopes };
+
 		if (currentScriptPath) {
 			transformers.sourceMapTransformer.scopesResponse(
 				currentScriptPath,
@@ -261,6 +270,7 @@ export class StackFrames {
 		originProvider: (url: string) => string,
 	): Promise<DebugProtocol.StackFrame> {
 		const debuggerCF = this.runtimeCFToDebuggerCF(frame);
+
 		const stackFrame = this.callFrameToStackFrame(
 			debuggerCF,
 			scripts,
@@ -271,6 +281,7 @@ export class StackFrames {
 		transformers.lineColTransformer.convertDebuggerLocationToClient(
 			stackFrame,
 		);
+
 		return stackFrame;
 	}
 
@@ -283,19 +294,26 @@ export class StackFrames {
 
 		for (let i = 0, len = exceptionLines.length; i < len; ++i) {
 			const line = exceptionLines[i];
+
 			const matches = line.match(
 				/^\s+at (.*?)\s*\(?([^ ]+):(\d+):(\d+)\)?$/,
 			);
 
 			if (!matches) continue;
+
 			const linePath = matches[2];
+
 			const lineNum = parseInt(matches[3], 10);
+
 			const adjustedLineNum = lineNum - 1;
+
 			const columnNum = parseInt(matches[4], 10);
+
 			const clientPath =
 				transformers.pathTransformer.getClientPathFromTargetPath(
 					linePath,
 				);
+
 			const mapped =
 				await transformers.sourceMapTransformer.mapToAuthored(
 					clientPath || linePath,
@@ -399,8 +417,11 @@ export class StackFrames {
 		originProvider: (url: string) => string,
 	): DebugProtocol.StackFrame {
 		const { location, functionName } = frame;
+
 		const line = location.lineNumber;
+
 		const column = location.columnNumber;
+
 		const script = scripts.getScriptById(location.scriptId);
 
 		try {
@@ -409,6 +430,7 @@ export class StackFrames {
 			const sourceReference = scripts.getSourceReferenceForScriptId(
 				script.scriptId,
 			);
+
 			const source: DebugProtocol.Source = {
 				name: path.basename(script.url),
 				path: script.url,
@@ -421,6 +443,7 @@ export class StackFrames {
 			const frameName =
 				functionName ||
 				(script.url ? "(anonymous function)" : "(eval code)");
+
 			return {
 				id: this._frameHandles.create(frame),
 				name: frameName,
@@ -432,6 +455,7 @@ export class StackFrames {
 			// Some targets such as the iOS simulator behave badly and return nonsense callFrames.
 			// In these cases, return a dummy stack frame
 			const evalUnknown = `${ChromeUtils.EVAL_NAME_PREFIX}_Unknown`;
+
 			return {
 				id: this._frameHandles.create(<any>{}),
 				name: evalUnknown,
@@ -450,6 +474,7 @@ export class StackFrames {
 		pauseEvent: Crdp.Debugger.PausedEvent,
 	): number {
 		const currentFrame = this._frameHandles.get(frameId);
+
 		if (!currentFrame || !currentFrame.callFrameId || !pauseEvent) {
 			return -1;
 		}
