@@ -23,6 +23,7 @@ export type ExceptionType =
 	| "uncaughtException"
 	| "unhandledRejection"
 	| "firstChance";
+
 export interface IExecutionResultTelemetryProperties {
 	// There is an issue on some clients and reportEvent only currently accept strings properties,
 	// hence all the following properties must be strings.

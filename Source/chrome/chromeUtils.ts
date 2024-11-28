@@ -257,6 +257,7 @@ export function getMatchingTargets(
 const PROTO_NAME = "__proto__";
 
 const NUM_REGEX = /^[0-9]+$/;
+
 export function compareVariableNames(var1: string, var2: string): number {
 	// __proto__ at the end
 	if (var1 === PROTO_NAME) {

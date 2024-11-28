@@ -14,6 +14,7 @@ import { ITelemetryPropertyCollector } from "./telemetry";
 import { IStringDictionary } from "./utils";
 
 export type ISourceMapPathOverrides = IStringDictionary<string>;
+
 export type IPathMapping = IStringDictionary<string>;
 
 export type BreakOnLoadStrategy = "regex" | "instrument" | "off";
@@ -142,6 +143,7 @@ export interface IExceptionDetailsVS extends DebugProtocol.ExceptionDetails {
 }
 
 type DAPExceptionInfoResponseBody = DebugProtocol.ExceptionInfoResponse["body"];
+
 export interface IExceptionInfoResponseBody
 	extends DAPExceptionInfoResponseBody {
 	details?: IExceptionDetailsVS;

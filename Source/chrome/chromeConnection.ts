@@ -36,6 +36,7 @@ export interface ITarget {
 }
 
 export type ITargetFilter = (target: ITarget) => boolean;
+
 export interface ITargetDiscoveryStrategy {
 	getTarget(
 		address: string,

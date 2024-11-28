@@ -135,6 +135,7 @@ export function retryAsync(
 }
 
 let caseSensitivePaths = true;
+
 export function setCaseSensitivePaths(useCaseSensitivePaths: boolean) {
 	caseSensitivePaths = useCaseSensitivePaths;
 }
@@ -617,6 +618,7 @@ export function pathGlobToBlackboxedRegex(glob: string): string {
 }
 
 const regexChars = "/\\.?*()^${}|[]+";
+
 export function escapeRegexSpecialChars(str: string, except?: string): string {
 	const useRegexChars = regexChars
 		.split("")

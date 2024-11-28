@@ -9,8 +9,11 @@ import { calculateElapsedTime, HighResTimer } from "./utils";
 export type TimingsReport = { [stepName: string]: [number] | number };
 
 export const stepStartedEventName = "stepStarted";
+
 export const milestoneReachedEventName = "milestoneReached";
+
 export const stepCompletedEventName = "stepCompleted";
+
 export const requestCompletedEventName = "requestCompleted";
 
 export interface IStepStartedEventArguments {

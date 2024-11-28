@@ -98,6 +98,7 @@ export function getComputedSourceRoot(
 }
 
 let aspNetFallbackCount = 0;
+
 export function getAspNetFallbackCount(): number {
 	return aspNetFallbackCount;
 }
