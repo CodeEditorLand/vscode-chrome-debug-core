@@ -41,23 +41,29 @@ import { ChromeDebugAdapter } from "./chromeDebugAdapter";
 
 export interface IChromeDebugAdapterOpts {
 	targetFilter?: ITargetFilter;
+
 	logFilePath?: string; // obsolete, vscode log dir should be used
 
 	// Override services
 	chromeConnection?: typeof ChromeConnection;
+
 	pathTransformer?: { new (): BasePathTransformer };
+
 	sourceMapTransformer?: {
 		new (sourceHandles: any): BaseSourceMapTransformer;
 	};
+
 	lineColTransformer?: { new (session: any): LineColTransformer };
 
 	breakpoints?: typeof Breakpoints;
+
 	scriptContainer?: typeof ScriptContainer;
 }
 
 export interface IChromeDebugSessionOpts extends IChromeDebugAdapterOpts {
 	/** The class of the adapter, which is instantiated for each session */
 	adapter: typeof ChromeDebugAdapter;
+
 	extensionName: string;
 }
 
@@ -87,9 +93,13 @@ export class ChromeDebugSession
 		IObservableEvents<
 			IStepStartedEventsEmitter & IFinishedStartingUpEventsEmitter
 		>;
+
 	private _extensionName: string;
+
 	public readonly events: StepProgressEventsEmitter;
+
 	private reporter = new ExecutionTimingsReporter();
+
 	private haveTimingsWhileStartingUpBeenReported = false;
 
 	public static readonly FinishedStartingUpEventName = "finishedStartingUp";
@@ -127,11 +137,15 @@ export class ChromeDebugSession
 		);
 
 		logVersionInfo();
+
 		this._extensionName = opts.extensionName;
+
 		this._debugAdapter = new (<any>opts.adapter)(opts, this);
+
 		this.events = new StepProgressEventsEmitter([
 			this._debugAdapter.events,
 		]);
+
 		this.configureExecutionTimingsReporting();
 
 		const safeGetErrDetails = (err) => {
@@ -151,7 +165,9 @@ export class ChromeDebugSession
 
 		const reportErrorTelemetry = (err, exceptionType: ExceptionType) => {
 			let properties: IExecutionResultTelemetryProperties = {};
+
 			properties.successful = "false";
+
 			properties.exceptionType = exceptionType;
 
 			utils.fillErrorDetails(properties, err);
@@ -207,6 +223,7 @@ export class ChromeDebugSession
 						reportFailure(
 							"The debug adapter doesn't recognize this command",
 						);
+
 						this.sendUnknownCommandResponse(
 							response,
 							request.command,
@@ -216,6 +233,7 @@ export class ChromeDebugSession
 							"requestType",
 							request.type,
 						);
+
 						response.body = await this._debugAdapter[
 							request.command
 						](
@@ -223,12 +241,14 @@ export class ChromeDebugSession
 							telemetryPropertyCollector,
 							request.seq,
 						);
+
 						this.sendResponse(response);
 					}
 				} catch (e) {
 					if (!this.isEvaluateRequest(request.command, e)) {
 						reportFailure(e);
 					}
+
 					this.failedRequest(request.command, response, e);
 				}
 			},
@@ -236,6 +256,7 @@ export class ChromeDebugSession
 	}
 
 	// { command: request.command, type: request.type };
+
 	private async reportTelemetry(
 		eventName: string,
 		action: (
@@ -265,6 +286,7 @@ export class ChromeDebugSession
 		const sendTelemetry = () => {
 			const timeTakenInMilliseconds =
 				utils.calculateElapsedTime(startProcessingTime);
+
 			properties.timeTakenInMilliseconds =
 				timeTakenInMilliseconds.toString();
 
@@ -277,6 +299,7 @@ export class ChromeDebugSession
 					timeTakenInMilliseconds,
 				);
 			}
+
 			Object.assign(
 				properties,
 				telemetryPropertyCollector.getProperties(),
@@ -288,8 +311,11 @@ export class ChromeDebugSession
 
 		const reportFailure = (e) => {
 			failed = true;
+
 			properties.successful = "false";
+
 			properties.exceptionType = "firstChance";
+
 			utils.fillErrorDetails(properties, e);
 
 			sendTelemetry();
@@ -300,6 +326,7 @@ export class ChromeDebugSession
 
 		if (!failed) {
 			properties.successful = "true";
+
 			sendTelemetry();
 		}
 	}
@@ -326,7 +353,9 @@ export class ChromeDebugSession
 			// Errors from evaluate show up in the console or watches pane. Doesn't seem right
 			// as it's not really a failed request. So it doesn't need the [extensionName] tag and worth special casing.
 			response.message = error ? error.message : "Unknown error";
+
 			response.success = false;
+
 			this.sendResponse(response);
 
 			return;
@@ -406,12 +435,14 @@ export class ChromeDebugSession
                }
              */
 			telemetry.reportEvent("report-start-up-timings", telemetryData);
+
 			this.haveTimingsWhileStartingUpBeenReported = true;
 		}
 	}
 
 	private configureExecutionTimingsReporting(): void {
 		this.reporter.subscribeTo(this.events);
+
 		this._debugAdapter.events.once(
 			ChromeDebugSession.FinishedStartingUpEventName,
 			(args) => {
@@ -434,6 +465,7 @@ export class ChromeDebugSession
 
 	public shutdown(): void {
 		process.removeAllListeners("uncaughtException");
+
 		process.removeAllListeners("unhandledRejection");
 
 		this.reportTimingsWhileStartingUpIfNeeded(
@@ -456,7 +488,9 @@ export class ChromeDebugSession
 					response.body.content
 				) {
 					const clonedResponse = Object.assign({}, response);
+
 					clonedResponse.body = Object.assign({}, response.body);
+
 					clonedResponse.body.content =
 						"<removed script source for logs>";
 
@@ -478,9 +512,11 @@ export class ChromeDebugSession
 
 function logVersionInfo(): void {
 	logger.log(`OS: ${os.platform()} ${os.arch()}`);
+
 	logger.log(`Adapter node: ${process.version} ${process.arch}`);
 
 	const coreVersion = require("../../../package.json").version;
+
 	logger.log("vscode-chrome-debug-core: " + coreVersion);
 
 	/* __GDPR__FRAGMENT__

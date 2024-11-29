@@ -26,6 +26,7 @@ let localize = nls.loadMessageBundle();
 
 export interface IHitConditionBreakpoint {
 	numHits: number;
+
 	shouldPause: (numHits: number) => boolean;
 }
 
@@ -38,8 +39,11 @@ export class Breakpoints {
 	private static HITCONDITION_MATCHER = /^(>|>=|=|<|<=|%)?\s*([0-9]+)$/;
 
 	private _breakpointIdHandles: utils.ReverseHandles<Crdp.Debugger.BreakpointId>;
+
 	private _nextUnboundBreakpointId = 0;
+
 	private _pendingBreakpointsByUrl: Map<string, IPendingBreakpoint>;
+
 	private _hitConditionBreakpointsById: Map<
 		Crdp.Debugger.BreakpointId,
 		IHitConditionBreakpoint
@@ -51,10 +55,13 @@ export class Breakpoints {
 		string,
 		ISetBreakpointResult[]
 	>();
+
 	private _setBreakpointsRequestQ: Promise<any> = Promise.resolve();
+
 	public get breakpointsQueueDrained(): Promise<void> {
 		return this._setBreakpointsRequestQ;
 	}
+
 	public get committedBreakpointsByUrl(): Map<
 		string,
 		ISetBreakpointResult[]
@@ -75,6 +82,7 @@ export class Breakpoints {
 		value: ISetBreakpointResult[],
 	): void {
 		let canonicalizedUrl = utils.canonicalizeUrl(url);
+
 		this._committedBreakpointsByUrl.set(canonicalizedUrl, value);
 	}
 
@@ -88,7 +96,9 @@ export class Breakpoints {
 	) {
 		this._breakpointIdHandles =
 			new utils.ReverseHandles<Crdp.Debugger.BreakpointId>();
+
 		this._pendingBreakpointsByUrl = new Map<string, IPendingBreakpoint>();
+
 		this._hitConditionBreakpointsById = new Map<
 			Crdp.Debugger.BreakpointId,
 			IHitConditionBreakpoint
@@ -100,6 +110,7 @@ export class Breakpoints {
 			string,
 			ISetBreakpointResult[]
 		>();
+
 		this._setBreakpointsRequestQ = Promise.resolve();
 	}
 
@@ -120,6 +131,7 @@ export class Breakpoints {
 			args.source.path = this.adapter.displayPathToRealPath(
 				args.source.path,
 			);
+
 			args.source.path = utils.canonicalizeUrl(args.source.path);
 		}
 
@@ -127,7 +139,9 @@ export class Breakpoints {
 			() => {
 				// Deep copy the args that we are going to modify, and keep the original values in originalArgs
 				const originalArgs = args;
+
 				args = JSON.parse(JSON.stringify(args));
+
 				args = this.adapter.lineColTransformer.setBreakpoints(args);
 
 				const sourceMapTransformerResponse =
@@ -143,12 +157,14 @@ export class Breakpoints {
 				) {
 					args = sourceMapTransformerResponse.args;
 				}
+
 				if (
 					sourceMapTransformerResponse &&
 					sourceMapTransformerResponse.ids
 				) {
 					ids = sourceMapTransformerResponse.ids;
 				}
+
 				args.source = this.adapter.pathTransformer.setBreakpoints(
 					args.source,
 				);
@@ -251,12 +267,14 @@ export class Breakpoints {
 									),
 								);
 							}
+
 							body.breakpoints =
 								this.adapter.sourceMapTransformer.setBreakpointsResponse(
 									body.breakpoints,
 									true,
 									requestSeq,
 								) || body.breakpoints;
+
 							this.adapter.lineColTransformer.setBreakpointsResponse(
 								body,
 							);
@@ -347,6 +365,7 @@ export class Breakpoints {
 				url,
 				ChromeUtils.EVAL_NAME_PREFIX,
 			);
+
 			responsePs = breakpoints.map(({ line, column = 0, condition }) =>
 				this.chrome.Debugger.setBreakpoint({
 					location: {
@@ -366,6 +385,7 @@ export class Breakpoints {
 			// If script has been parsed, script object won't be undefined and we would have the mapping file on the disk and we can directly set breakpoint using that
 			if (!this.adapter.breakOnLoadActive || script) {
 				const urlRegex = utils.pathToRegex(url);
+
 				responsePs = breakpoints.map(
 					({ line, column = 0, condition }) => {
 						return this.addOneBreakpointByUrl(
@@ -430,6 +450,7 @@ export class Breakpoints {
 							columnNumber,
 							possibleBpResponse.locations,
 						);
+
 					bpLocation = {
 						lineNumber: selectedLocation.lineNumber,
 						columnNumber: selectedLocation.columnNumber || 0,
@@ -494,6 +515,7 @@ export class Breakpoints {
 			args.source.path = this.adapter.displayPathToRealPath(
 				args.source.path,
 			);
+
 			args.source.path = utils.canonicalizeUrl(args.source.path);
 		}
 
@@ -507,17 +529,21 @@ export class Breakpoints {
 
 		// Deep copy the args that we are going to modify, and keep the original values in originalArgs
 		args = JSON.parse(JSON.stringify(args));
+
 		args.endLine =
 			this.adapter.lineColTransformer.convertClientLineToDebugger(
 				typeof args.endLine === "number" ? args.endLine : args.line + 1,
 			);
+
 		args.endColumn =
 			this.adapter.lineColTransformer.convertClientLineToDebugger(
 				args.endColumn || 1,
 			);
+
 		args.line = this.adapter.lineColTransformer.convertClientLineToDebugger(
 			args.line,
 		);
+
 		args.column =
 			this.adapter.lineColTransformer.convertClientColumnToDebugger(
 				args.column || 1,
@@ -533,7 +559,9 @@ export class Breakpoints {
 				},
 				requestSeq,
 			);
+
 			args.line = startArgs.args.breakpoints[0].line;
+
 			args.column = startArgs.args.breakpoints[0].column;
 
 			const endArgs = this.adapter.sourceMapTransformer.setBreakpoints(
@@ -545,7 +573,9 @@ export class Breakpoints {
 				},
 				requestSeq,
 			);
+
 			args.endLine = endArgs.args.breakpoints[0].line;
+
 			args.endColumn = endArgs.args.breakpoints[0].column;
 		}
 
@@ -618,6 +648,7 @@ export class Breakpoints {
 						);
 
 					const response = { breakpoints };
+
 					this.adapter.lineColTransformer.setBreakpointsResponse(
 						response,
 					);
@@ -676,6 +707,7 @@ export class Breakpoints {
 			if (ids && ids[i]) {
 				// IDs passed in for previously unverified BPs
 				bpId = ids[i];
+
 				this._breakpointIdHandles.set(bpId, responseBpId);
 			} else {
 				bpId =
@@ -831,6 +863,7 @@ export class Breakpoints {
 				actualLocation: params.location,
 			});
 		}
+
 		this.setValueForCommittedBreakpointsByUrl(script.url, committedBps);
 
 		const bp = <DebugProtocol.Breakpoint>{
@@ -849,8 +882,11 @@ export class Breakpoints {
 			// If we set these BPs before the script was loaded, remove from the pending list
 			this._pendingBreakpointsByUrl.delete(scriptPath);
 		}
+
 		this.adapter.sourceMapTransformer.breakpointResolved(bp, scriptPath);
+
 		this.adapter.lineColTransformer.breakpointResolved(bp);
+
 		this.adapter.session.sendEvent(new BreakpointEvent("changed", bp));
 	}
 
@@ -965,7 +1001,9 @@ export class Breakpoints {
 			logger.log(
 				`OnScriptParsed.resolvePendingBPs: Resolving pending breakpoints: ${JSON.stringify(pendingBP)}`,
 			);
+
 			await this.resolvePendingBreakpoint(pendingBP, scripts);
+
 			this._pendingBreakpointsByUrl.delete(source);
 		} else if (source) {
 			const sourceFileName = path.basename(source).toLowerCase();
@@ -994,6 +1032,7 @@ export class Breakpoints {
 		).then((response) => {
 			response.breakpoints.forEach((bp, i) => {
 				bp.id = pendingBP.ids[i];
+
 				this.adapter.session.sendEvent(
 					new BreakpointEvent("changed", bp),
 				);
@@ -1011,6 +1050,7 @@ export class Breakpoints {
 				// Increment the hit count and check whether to pause
 				const hitConditionBp =
 					this._hitConditionBreakpointsById.get(hitBp);
+
 				hitConditionBp.numHits++;
 				// Only resume if we didn't break for some user action (step, pause button)
 				if (
@@ -1025,6 +1065,7 @@ export class Breakpoints {
 				}
 			}
 		}
+
 		return null;
 	}
 }

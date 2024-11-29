@@ -64,6 +64,7 @@ export class LineColTransformer implements IDebugTransformer {
 
 	public mappedExceptionStack(location: {
 		line: number;
+
 		column: number;
 	}): void {
 		this.convertDebuggerLocationToClient(location);
@@ -74,14 +75,18 @@ export class LineColTransformer implements IDebugTransformer {
 
 		if (typeof scope.endLine === "number") {
 			const endScope = { line: scope.endLine, column: scope.endColumn };
+
 			this.convertDebuggerLocationToClient(endScope);
+
 			scope.endLine = endScope.line;
+
 			scope.endColumn = endScope.column;
 		}
 	}
 
 	public convertClientLocationToDebugger(location: {
 		line?: number;
+
 		column?: number;
 	}): void {
 		if (typeof location.line === "number") {
@@ -97,6 +102,7 @@ export class LineColTransformer implements IDebugTransformer {
 
 	public convertDebuggerLocationToClient(location: {
 		line?: number;
+
 		column?: number;
 	}): void {
 		if (typeof location.line === "number") {

@@ -72,6 +72,7 @@ export class StoppedEvent2 extends StoppedEvent {
 							"Paused on caught exception",
 						);
 				}
+
 				break;
 
 			case "pause":
@@ -111,6 +112,7 @@ export class StoppedEvent2 extends StoppedEvent {
 					"reason.description.promiseRejection",
 					"Paused on promise rejection",
 				);
+
 				this.body.reason = "exception";
 
 				break;

@@ -21,7 +21,9 @@ import { BasePathTransformer } from "./basePathTransformer";
  */
 export class UrlPathTransformer extends BasePathTransformer {
 	private _pathMapping: IPathMapping;
+
 	private _clientPathToTargetUrl = new Map<string, string>();
+
 	private _targetUrlToClientPath = new Map<string, string>();
 
 	public launch(args: ILaunchRequestArgs): Promise<void> {
@@ -55,6 +57,7 @@ export class UrlPathTransformer extends BasePathTransformer {
 
 		if (url) {
 			source.path = url;
+
 			logger.log(`Paths.setBP: Resolved ${path} to ${source.path}`);
 
 			return source;
@@ -62,6 +65,7 @@ export class UrlPathTransformer extends BasePathTransformer {
 			logger.log(
 				`Paths.setBP: No target url cached yet for client path: ${path}.`,
 			);
+
 			source.path = path;
 
 			return source;
@@ -70,6 +74,7 @@ export class UrlPathTransformer extends BasePathTransformer {
 
 	public clearTargetContext(): void {
 		this._clientPathToTargetUrl = new Map<string, string>();
+
 		this._targetUrlToClientPath = new Map<string, string>();
 	}
 
@@ -89,7 +94,9 @@ export class UrlPathTransformer extends BasePathTransformer {
 			);
 
 			const canonicalizedClientPath = utils.canonicalizeUrl(clientPath);
+
 			this._clientPathToTargetUrl.set(canonicalizedClientPath, scriptUrl);
+
 			this._targetUrlToClientPath.set(scriptUrl, clientPath);
 
 			scriptUrl = clientPath;
@@ -118,8 +125,11 @@ export class UrlPathTransformer extends BasePathTransformer {
 			// clear the sourceReference since it's not needed.
 			if (clientPath) {
 				source.path = clientPath;
+
 				source.sourceReference = undefined;
+
 				source.origin = undefined;
+
 				source.name = path.basename(clientPath);
 			}
 		}

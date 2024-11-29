@@ -9,13 +9,18 @@ export class InternalSourceBreakpoint {
 	static readonly LOGPOINT_URL = "vscode.logpoint.js";
 
 	readonly line: number;
+
 	readonly column?: number;
+
 	readonly condition?: string;
+
 	readonly hitCondition?: string;
 
 	constructor(breakpoint: DebugProtocol.SourceBreakpoint) {
 		this.line = breakpoint.line;
+
 		this.column = breakpoint.column;
+
 		this.hitCondition = breakpoint.hitCondition;
 
 		if (breakpoint.logMessage) {

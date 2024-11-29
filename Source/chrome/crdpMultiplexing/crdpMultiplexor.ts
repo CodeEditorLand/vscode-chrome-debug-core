@@ -80,7 +80,9 @@ export class CRDPMultiplexor {
 
 		if (channel) {
 			message.id = decodifyId(message.id);
+
 			data = JSON.stringify(message);
+
 			channel.callMessageCallbacks(data);
 		} else {
 			throwCriticalError(
@@ -115,6 +117,7 @@ export class CRDPMultiplexor {
 			this._channels.length,
 			this,
 		);
+
 		this._channels.push(channel);
 
 		return channel;
@@ -125,12 +128,14 @@ export class CRDPMultiplexor {
 
 		if (message.id !== undefined) {
 			message.id = encodifyChannel(channel.id, message.id);
+
 			data = JSON.stringify(message);
 		} else {
 			throwCriticalError(
 				`Channel [${channel.name}] sent a message without an id: ${data}`,
 			);
 		}
+
 		this._wrappedLikeSocket.send(data);
 	}
 
@@ -150,7 +155,9 @@ export class CRDPChannel implements LikeSocket {
 	private static timeToPreserveMessagesInMillis = 60 * 1000;
 
 	private _messageCallbacks: Function[] = [];
+
 	private _enabledDomains: { [domain: string]: boolean } = {};
+
 	private _pendingMessagesForDomain: { [domain: string]: string[] } = {};
 
 	public callMessageCallbacks(messageData: string): void {
@@ -174,11 +181,13 @@ export class CRDPChannel implements LikeSocket {
 
 		if (messagesForDomain === undefined) {
 			this._pendingMessagesForDomain[domain] = [];
+
 			messagesForDomain = this._pendingMessagesForDomain[domain];
 		}
 
 		// Usually this is too much logging, but we might use it while debugging
 		// logger.log(`CRDP Multiplexor - Storing message to channel ${this.name} for ${domain} for later: ${messageData}`);
+
 		messagesForDomain.push(messageData);
 	}
 
@@ -199,6 +208,7 @@ export class CRDPChannel implements LikeSocket {
 
 		if (isEnableMethod) {
 			domain = extractDomain(method);
+
 			this._enabledDomains[domain] = true;
 		}
 
@@ -220,7 +230,9 @@ export class CRDPChannel implements LikeSocket {
 				logger.log(
 					`CRDP Multiplexor - Sending pending messages of domain ${domain}(Count = ${pendingMessagesData.length})`,
 				);
+
 				delete this._pendingMessagesForDomain[domain];
+
 				pendingMessagesData.forEach((pendingMessageData) => {
 					this.callDomainMessageCallbacks(domain, pendingMessageData);
 				});
@@ -232,12 +244,16 @@ export class CRDPChannel implements LikeSocket {
 		logger.log(
 			`CRDP Multiplexor - Discarding unsent pending messages for domains: ${Object.keys(this._pendingMessagesForDomain).join(", ")}`,
 		);
+
 		this._pendingMessagesForDomain = null;
 	}
 
 	public on(event: string, cb: Function): void;
+
 	public on(event: "open", cb: (ws: LikeSocket) => void): void;
+
 	public on(event: "message", cb: (data: string) => void): void;
+
 	public on(event: string, cb: Function): void {
 		if (event === "message") {
 			if (this._messageCallbacks.length === 0) {
@@ -256,6 +272,7 @@ export class CRDPChannel implements LikeSocket {
 	public removeListener(event: string, cb: Function): void {
 		if (event === "message") {
 			const index = this._messageCallbacks.indexOf(cb);
+
 			this._messageCallbacks.splice(index, 1);
 		} else {
 			this._multiplexor.removeListenerOfNonMultiplexedEvent(event, cb);

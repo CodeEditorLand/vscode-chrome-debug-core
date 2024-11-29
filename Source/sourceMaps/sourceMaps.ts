@@ -12,6 +12,7 @@ import { SourceMapFactory } from "./sourceMapFactory";
 export class SourceMaps {
 	// Maps absolute paths to generated/authored source files to their corresponding SourceMap object
 	private _generatedPathToSourceMap = new Map<string, SourceMap>();
+
 	private _authoredPathToSourceMap = new Map<string, SourceMap>();
 
 	private _sourceMapFactory: SourceMapFactory;
@@ -117,6 +118,7 @@ export class SourceMaps {
 				pathToGenerated.toLowerCase(),
 				sourceMap,
 			);
+
 			sourceMap.authoredSources.forEach((authoredSource) =>
 				this._authoredPathToSourceMap.set(
 					authoredSource.toLowerCase(),

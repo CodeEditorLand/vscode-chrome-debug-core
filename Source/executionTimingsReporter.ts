@@ -30,7 +30,9 @@ export interface IStepCompletedEventArguments {
 
 export interface IRequestCompletedEventArguments {
 	requestName: string;
+
 	startTime: number;
+
 	timeTakenInMilliseconds: number;
 }
 
@@ -44,14 +46,17 @@ export interface IStepStartedEventsEmitter {
 		event: "stepStarted",
 		listener: (args: IStepStartedEventArguments) => void,
 	): this;
+
 	on(
 		event: "milestoneReached",
 		listener: (args: IMilestoneReachedEventArguments) => void,
 	): this;
+
 	removeListener(
 		event: "stepStarted",
 		listener: (args: IStepStartedEventArguments) => void,
 	): this;
+
 	removeListener(
 		event: "milestoneReached",
 		listener: (args: IMilestoneReachedEventArguments) => void,
@@ -60,6 +65,7 @@ export interface IStepStartedEventsEmitter {
 
 export interface FinishedStartingUpEventArguments {
 	requestedContentWasDetected: boolean;
+
 	reasonForNotDetected: string;
 }
 
@@ -68,11 +74,14 @@ export interface IFinishedStartingUpEventsEmitter {
 		event: "finishedStartingUp",
 		listener: (args: FinishedStartingUpEventArguments) => void,
 	): this;
+
 	once(
 		event: "finishedStartingUp",
 		listener: (args: FinishedStartingUpEventArguments) => void,
 	): this;
+
 	removeListener(event: "finishedStartingUp", listener: () => void): this;
+
 	removeListener(event: "finishedStartingUp", listener: () => void): this;
 }
 
@@ -118,6 +127,7 @@ export class StepProgressEventsEmitter
 
 	public on(event: string, listener: (...args: any[]) => void): this {
 		super.on(event, listener);
+
 		this._nestedEmitters.forEach((nestedEmitter) =>
 			nestedEmitter.on(event as any, listener as any),
 		);
@@ -130,6 +140,7 @@ export class StepProgressEventsEmitter
 		listener: (...args: any[]) => void,
 	): this {
 		super.removeListener(event, listener);
+
 		this._nestedEmitters.forEach((nestedEmitter) =>
 			nestedEmitter.removeListener(event as any, listener as any),
 		);
@@ -147,6 +158,7 @@ class SubscriptionManager {
 		listener: (...args: any[]) => void,
 	): void {
 		eventEmitter.on(event, listener);
+
 		this._removeSubscriptionActions.push(() =>
 			eventEmitter.removeListener(event, listener),
 		);
@@ -168,11 +180,15 @@ export interface IAllRequestProperties {
 
 export class ExecutionTimingsReporter {
 	private readonly _allStartTime: HighResTimer;
+
 	private readonly _eventsExecutionTimesInMilliseconds: {
 		[stepName: string]: [number];
 	} = {};
+
 	private readonly _stepsList = [] as string[];
+
 	private readonly _subscriptionManager = new SubscriptionManager();
+
 	private readonly _requestProperties = {} as IAllRequestProperties;
 
 	private _currentStepStartTime: HighResTimer;
@@ -190,13 +206,17 @@ export class ExecutionTimingsReporter {
 
 	private recordPreviousStepAndConfigureNewStep(newStepName: string): void {
 		this.recordTimeTaken(this._currentStepName, this._currentStepStartTime);
+
 		this._stepsList.push(this._currentStepName);
+
 		this._currentStepStartTime = process.hrtime();
+
 		this._currentStepName = newStepName;
 	}
 
 	private recordTimeTaken(eventName: string, sinceWhen: HighResTimer): void {
 		const timeTakenInMilliseconds = calculateElapsedTime(sinceWhen);
+
 		this.addElementToArrayProperty(
 			this._eventsExecutionTimesInMilliseconds,
 			eventName,
@@ -215,6 +235,7 @@ export class ExecutionTimingsReporter {
            }
          */
 		this.recordPreviousStepAndConfigureNewStep("AfterLastStep");
+
 		this._subscriptionManager.removeAll(); // Remove all subscriptions so we don't get any new events
 
 		/* __GDPR__FRAGMENT__
@@ -257,11 +278,13 @@ export class ExecutionTimingsReporter {
            }
          */
 		const propertyPrefix = `Request.${requestName}.`;
+
 		this.addElementToArrayProperty(
 			this._requestProperties,
 			propertyPrefix + "startTime",
 			startTime,
 		);
+
 		this.addElementToArrayProperty(
 			this._requestProperties,
 			propertyPrefix + "timeTakenInMilliseconds",
@@ -276,6 +299,7 @@ export class ExecutionTimingsReporter {
 	): void {
 		const propertiesArray = (object[propertyName] =
 			object[propertyName] || ([] as T[]));
+
 		propertiesArray.push(elementToAdd);
 	}
 

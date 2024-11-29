@@ -62,7 +62,9 @@ export class ChromeTargetDiscovery
 		IObservableEvents<IStepStartedEventsEmitter>
 {
 	private logger: Logger.ILogger;
+
 	private telemetry: telemetry.ITelemetryReporter;
+
 	public readonly events = new StepProgressEventsEmitter();
 
 	constructor(
@@ -70,6 +72,7 @@ export class ChromeTargetDiscovery
 		_telemetry: telemetry.ITelemetryReporter,
 	) {
 		this.logger = _logger;
+
 		this.telemetry = _telemetry;
 	}
 
@@ -98,6 +101,7 @@ export class ChromeTargetDiscovery
 		this.logger.verbose(
 			`Attaching to target: ${JSON.stringify(selectedTarget)}`,
 		);
+
 		this.logger.verbose(
 			`WebSocket Url: ${selectedTarget.webSocketDebuggerUrl}`,
 		);
@@ -139,6 +143,7 @@ export class ChromeTargetDiscovery
 		port: number,
 	): Promise<TargetVersions> {
 		const url = `http://${address}:${port}/json/version`;
+
 		this.logger.log(
 			`Getting browser and debug protocol version via ${url}`,
 		);
@@ -161,9 +166,11 @@ export class ChromeTargetDiscovery
 
 				const browserWithPrefixVersionString =
 					response.Browser as string;
+
 				this.logger.log(
 					`Got browser version: ${browserWithPrefixVersionString}`,
 				);
+
 				this.logger.log(
 					`Got debug protocol version: ${protocolVersionString}`,
 				);
@@ -184,6 +191,7 @@ export class ChromeTargetDiscovery
 						browserWithPrefixVersionString.substr(
 							chromePrefix.length,
 						);
+
 					browserVersion = Version.parse(browserVersionString);
 				}
 
@@ -201,6 +209,7 @@ export class ChromeTargetDiscovery
 				`Didn't get a valid response for /json/version call. Error: ${e.message}. Response: ${jsonResponse}`,
 			);
 		}
+
 		return new TargetVersions(
 			Version.unknownVersion(),
 			Version.unknownVersion(),
@@ -275,6 +284,7 @@ export class ChromeTargetDiscovery
 		if (Array.isArray(responseArray)) {
 			return (responseArray as ITarget[]).map((target) => {
 				this._fixRemoteUrl(address, port, target);
+
 				target.version = version;
 
 				return target;
@@ -344,6 +354,7 @@ export class ChromeTargetDiscovery
 
 			if (addressMatch) {
 				const replaceAddress = `${remoteAddress}:${remotePort}`;
+
 				target.webSocketDebuggerUrl =
 					target.webSocketDebuggerUrl.replace(
 						addressMatch[1],

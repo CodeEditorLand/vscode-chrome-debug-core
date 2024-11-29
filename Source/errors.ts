@@ -24,21 +24,34 @@ export const noRestartFrame = localize(
 
 export class ErrorWithMessage extends Error implements DebugProtocol.Message {
 	public id: number;
+
 	public format: string;
+
 	public variables?: { [key: string]: string };
+
 	public sendTelemetry?: boolean;
+
 	public showUser?: boolean;
+
 	public url?: string;
+
 	public urlLabel?: string;
 
 	constructor(message: DebugProtocol.Message) {
 		super(message.format);
+
 		this.id = message.id;
+
 		this.format = message.format;
+
 		this.variables = message.variables;
+
 		this.sendTelemetry = message.sendTelemetry;
+
 		this.showUser = message.showUser;
+
 		this.url = message.url;
+
 		this.urlLabel = message.urlLabel;
 	}
 }

@@ -17,6 +17,7 @@ import { InternalSourceBreakpoint } from "./internalSourceBreakpoint";
 
 export interface UrlRegexAndFileSet {
 	urlRegex: string;
+
 	fileSet: Set<string>;
 }
 
@@ -30,13 +31,16 @@ export class BreakOnLoadHelper {
 		string,
 		UrlRegexAndFileSet
 	>();
+
 	private _stopOnEntryRequestedFileNameToBreakpointId = new Map<
 		string,
 		string
 	>();
+
 	private _stopOnEntryRegexToBreakpointId = new Map<string, string>();
 
 	private _chromeDebugAdapter: ChromeDebugAdapter;
+
 	private _breakOnLoadStrategy: BreakOnLoadStrategy;
 
 	public constructor(
@@ -44,7 +48,9 @@ export class BreakOnLoadHelper {
 		breakOnLoadStrategy: BreakOnLoadStrategy,
 	) {
 		this.validateStrategy(breakOnLoadStrategy);
+
 		this._chromeDebugAdapter = chromeDebugAdapter;
+
 		this._breakOnLoadStrategy = breakOnLoadStrategy;
 	}
 
@@ -117,6 +123,7 @@ export class BreakOnLoadHelper {
 			await this._chromeDebugAdapter.getBreakpointsResolvedDefer(
 				pausedScriptId,
 			).promise;
+
 			logger.log(
 				"BreakOnLoadHelper: Finished waiting for breakpoints to get resolved.",
 			);
@@ -225,12 +232,14 @@ export class BreakOnLoadHelper {
 
 			if (!regexAndFileNames) {
 				notification.hitBreakpoints = [bp];
+
 				allStopOnEntryBreakpoints = false;
 			} else {
 				const normalizedMappedUrl = utils.canonicalizeUrl(mappedUrl);
 
 				if (regexAndFileNames.fileSet.has(normalizedMappedUrl)) {
 					regexAndFileNames.fileSet.delete(normalizedMappedUrl);
+
 					assert(
 						this._stopOnEntryRequestedFileNameToBreakpointId.delete(
 							normalizedMappedUrl,
@@ -242,7 +251,9 @@ export class BreakOnLoadHelper {
 						logger.log(
 							`Stop on entry breakpoint hit for last remaining file. Removing: ${bp} created for: ${normalizedMappedUrl}`,
 						);
+
 						await this.removeBreakpointById(bp);
+
 						assert(
 							this._stopOnEntryRegexToBreakpointId.delete(
 								regexAndFileNames.urlRegex,
@@ -277,6 +288,7 @@ export class BreakOnLoadHelper {
 				return true;
 			}
 		}
+
 		return false;
 	}
 
@@ -312,8 +324,10 @@ export class BreakOnLoadHelper {
 						`Exception occured while trying to set stop on entry breakpoint ${e.message}.`,
 					);
 				}
+
 				if (result) {
 					breakpointId = result.breakpointId;
+
 					this._stopOnEntryRegexToBreakpointId.set(
 						urlRegex,
 						breakpointId,
@@ -323,6 +337,7 @@ export class BreakOnLoadHelper {
 						`BreakpointId was null when trying to set on urlregex ${urlRegex}. This normally happens if the breakpoint already exists.`,
 					);
 				}
+
 				responsePs = [result];
 			} else {
 				responsePs = [];
@@ -345,7 +360,9 @@ export class BreakOnLoadHelper {
 			} else {
 				// else create an entry for this breakpoint id
 				const fileSet = new Set<string>();
+
 				fileSet.add(normalizedUrl);
+
 				this._stopOnEntryBreakpointIdToRequestedFileName.set(
 					breakpointId,
 					{ urlRegex, fileSet },
@@ -354,6 +371,7 @@ export class BreakOnLoadHelper {
 		} else {
 			responsePs = [];
 		}
+
 		return Promise.all(responsePs);
 	}
 
@@ -389,6 +407,7 @@ export class BreakOnLoadHelper {
 		await this._chromeDebugAdapter.chrome.DOMDebugger.setInstrumentationBreakpoint(
 			{ eventName: "scriptFirstStatement" },
 		);
+
 		this._instrumentationBreakpointSet = true;
 	}
 
@@ -426,6 +445,7 @@ export class BreakOnLoadHelper {
 		) {
 			return true;
 		}
+
 		return false;
 	}
 }

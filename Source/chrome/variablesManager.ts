@@ -23,6 +23,7 @@ import * as variables from "./variables";
  */
 export class VariablesManager {
 	private _variableHandles: variables.VariableHandles;
+
 	private get chrome() {
 		return this._chromeConnection.api;
 	}
@@ -125,6 +126,7 @@ export class VariablesManager {
 
 				// Convert Chrome prop descriptors to DebugProtocol vars
 				const variables: Promise<DebugProtocol.Variable>[] = [];
+
 				propsByName.forEach((propDesc) => {
 					if (
 						!filter ||
@@ -488,6 +490,7 @@ export class VariablesManager {
 					ChromeUtils.errorMessageFromExceptionDetails(
 						response.exceptionDetails,
 					);
+
 				logger.verbose(
 					"Exception thrown evaluating getter - " + exceptionMessage,
 				);

@@ -25,13 +25,21 @@ import { WebSocketToLikeSocketProxy } from "./crdpMultiplexing/webSocketToLikeSo
 
 export interface ITarget {
 	description: string;
+
 	devtoolsFrontendUrl: string;
+
 	id: string;
+
 	thumbnailUrl?: string;
+
 	title: string;
+
 	type: string;
+
 	url?: string;
+
 	webSocketDebuggerUrl: string;
+
 	version: Promise<TargetVersions>;
 }
 
@@ -94,6 +102,7 @@ class LoggingSocket extends WebSocket {
 					// If this message contains the source of a script, we log everything but the source
 					msgObj.result.scriptSource =
 						"<removed script source for logs>";
+
 					logger.verbose("← From target: " + JSON.stringify(msgObj));
 				} else {
 					logger.verbose("← From target: " + msgStr);
@@ -112,13 +121,16 @@ class LoggingSocket extends WebSocket {
 		}
 
 		super.send.apply(this, arguments);
+
 		logger.verbose("→ To target: " + msgStr);
 	}
 }
 
 export interface IChromeError {
 	code: number;
+
 	message: string;
+
 	data: string;
 }
 
@@ -131,12 +143,18 @@ export class ChromeConnection
 	protected static ATTACH_TIMEOUT = 10000; // ms
 
 	private _socket: WebSocket;
+
 	private _crdpSocketMultiplexor: CRDPMultiplexor;
+
 	private _client: Client;
+
 	private _targetFilter: ITargetFilter;
+
 	private _targetDiscoveryStrategy: ITargetDiscoveryStrategy &
 		IObservableEvents<IStepStartedEventsEmitter>;
+
 	private _attachedTarget: ITarget;
+
 	public readonly events: StepProgressEventsEmitter;
 
 	constructor(
@@ -145,8 +163,10 @@ export class ChromeConnection
 		targetFilter?: ITargetFilter,
 	) {
 		this._targetFilter = targetFilter;
+
 		this._targetDiscoveryStrategy =
 			targetDiscovery || new ChromeTargetDiscovery(logger, telemetry);
+
 		this.events = new StepProgressEventsEmitter([
 			this._targetDiscoveryStrategy.events,
 		]);
@@ -197,6 +217,7 @@ export class ChromeConnection
            }
          */
 		this.events.emitStepStarted("Attach.AttachToTargetDebuggerWebsocket");
+
 		this._socket = new LoggingSocket(wsUrl, undefined, {
 			headers: { Host: "localhost" },
 		});
@@ -205,10 +226,12 @@ export class ChromeConnection
 			this._crdpSocketMultiplexor = new CRDPMultiplexor(
 				this._socket as any as LikeSocket,
 			);
+
 			new WebSocketToLikeSocketProxy(
 				extraCRDPChannelPort,
 				this._crdpSocketMultiplexor.addChannel("extraCRDPEndpoint"),
 			).start();
+
 			this._client = new Client(
 				this._crdpSocketMultiplexor.addChannel("debugger"),
 			);

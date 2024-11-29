@@ -51,6 +51,7 @@ export class FallbackToClientPathTransformer extends UrlPathTransformer {
 						logger.log(
 							`The client responded that the url "${url}" maps to the file path "${response.body.filePath}"`,
 						);
+
 						resolve(response.body.filePath);
 					} else {
 						reject(

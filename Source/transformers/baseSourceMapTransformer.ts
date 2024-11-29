@@ -25,14 +25,19 @@ const localize = nls.loadMessageBundle();
 
 interface ISavedSetBreakpointsArgs {
 	generatedPath: string;
+
 	authoredPath: string;
+
 	originalBPs: DebugProtocol.Breakpoint[];
 }
 
 export interface ISourceLocation {
 	source: DebugProtocol.Source;
+
 	line: number;
+
 	column: number;
+
 	isSourceMapped?: boolean; // compat with stack frame
 }
 
@@ -41,21 +46,27 @@ export interface ISourceLocation {
  */
 export class BaseSourceMapTransformer {
 	protected _sourceMaps: SourceMaps;
+
 	protected _scriptContainer: ScriptContainer;
+
 	private _enableSourceMapCaching: boolean;
 
 	private _requestSeqToSetBreakpointsArgs: Map<
 		number,
 		ISavedSetBreakpointsArgs
 	>;
+
 	private _allRuntimeScriptPaths: Set<string>;
+
 	private _authoredPathsToMappedBPs: Map<
 		string,
 		DebugProtocol.SourceBreakpoint[]
 	>;
+
 	private _authoredPathsToClientBreakpointIds: Map<string, number[]>;
 
 	protected _preLoad = Promise.resolve();
+
 	private _processingNewSourceMap: Promise<any> = Promise.resolve();
 
 	public caseSensitivePaths: boolean;
@@ -85,20 +96,25 @@ export class BaseSourceMapTransformer {
 	protected init(args: ILaunchRequestArgs | IAttachRequestArgs): void {
 		if (args.sourceMaps) {
 			this._enableSourceMapCaching = args.enableSourceMapCaching;
+
 			this._sourceMaps = new SourceMaps(
 				args.pathMapping,
 				args.sourceMapPathOverrides,
 				this._enableSourceMapCaching,
 			);
+
 			this._requestSeqToSetBreakpointsArgs = new Map<
 				number,
 				ISavedSetBreakpointsArgs
 			>();
+
 			this._allRuntimeScriptPaths = new Set<string>();
+
 			this._authoredPathsToMappedBPs = new Map<
 				string,
 				DebugProtocol.SourceBreakpoint[]
 			>();
+
 			this._authoredPathsToClientBreakpointIds = new Map<
 				string,
 				number[]
@@ -147,7 +163,9 @@ export class BaseSourceMapTransformer {
 				logger.log(
 					`SourceMaps.setBP: Mapped ${argsPath} to ${mappedPath}`,
 				);
+
 				args.authoredPath = argsPath;
+
 				args.source.path = mappedPath;
 
 				// DebugProtocol doesn't send cols yet, but they need to be added from sourcemaps
@@ -164,12 +182,15 @@ export class BaseSourceMapTransformer {
 						logger.log(
 							`SourceMaps.setBP: Mapped ${argsPath}:${line + 1}:${column + 1} to ${mappedPath}:${mapped.line + 1}:${mapped.column + 1}`,
 						);
+
 						bp.line = mapped.line;
+
 						bp.column = mapped.column;
 					} else {
 						logger.log(
 							`SourceMaps.setBP: Mapped ${argsPath} but not line ${line + 1}, column 1`,
 						);
+
 						bp.column = column; // take 0 default if needed
 					}
 				});
@@ -267,7 +288,9 @@ export class BaseSourceMapTransformer {
 						logger.log(
 							`SourceMaps.setBP: Mapped ${args.generatedPath}:${bp.line + 1}:${bp.column + 1} to ${mapped.source}:${mapped.line + 1}`,
 						);
+
 						bp.line = mapped.line;
+
 						bp.column = mapped.column;
 					} else {
 						logger.log(
@@ -276,6 +299,7 @@ export class BaseSourceMapTransformer {
 
 						if (args.originalBPs[i]) {
 							bp.line = args.originalBPs[i].line;
+
 							bp.column = args.originalBPs[i].column;
 						}
 					}
@@ -329,14 +353,20 @@ export class BaseSourceMapTransformer {
 		) {
 			// Script was mapped to a valid local path or internal path
 			sourceLocation.source.path = mapped.source;
+
 			sourceLocation.source.sourceReference = undefined;
+
 			sourceLocation.source.name = path.basename(mapped.source);
+
 			sourceLocation.line = mapped.line;
+
 			sourceLocation.column = mapped.column;
+
 			sourceLocation.isSourceMapped = true;
 
 			return;
 		}
+
 		const inlinedSource =
 			mapped && this._sourceMaps.sourceContentFor(mapped.source);
 
@@ -344,25 +374,33 @@ export class BaseSourceMapTransformer {
 			// Clear the path and set the sourceReference - the client will ask for
 			// the source later and it will be returned from the sourcemap
 			sourceLocation.source.name = path.basename(mapped.source);
+
 			sourceLocation.source.path = mapped.source;
+
 			sourceLocation.source.sourceReference =
 				this._scriptContainer.getSourceReferenceForScriptPath(
 					mapped.source,
 					inlinedSource,
 				);
+
 			sourceLocation.source.origin = localize(
 				"origin.inlined.source.map",
 				"read-only inlined content from source map",
 			);
+
 			sourceLocation.line = mapped.line;
+
 			sourceLocation.column = mapped.column;
+
 			sourceLocation.isSourceMapped = true;
 
 			return;
 		}
+
 		if (utils.existsSync(sourceLocation.source.path)) {
 			// Script could not be mapped, but does exist on disk. Keep it and clear the sourceReference.
 			sourceLocation.source.sourceReference = undefined;
+
 			sourceLocation.source.origin = undefined;
 
 			return;
@@ -388,10 +426,12 @@ export class BaseSourceMapTransformer {
 				sourceMapURL,
 				this._isVSClient,
 			);
+
 			this._processingNewSourceMap = Promise.all([
 				this._processingNewSourceMap,
 				processNewSourceMapP,
 			]);
+
 			await processNewSourceMapP;
 
 			const sources = this._sourceMaps.allMappedSources(pathToGenerated);
@@ -422,6 +462,7 @@ export class BaseSourceMapTransformer {
 			if (mapped) {
 				// No need to send back the path, the bp can only move within its script
 				bp.line = mapped.line;
+
 				bp.column = mapped.column;
 			}
 		}
@@ -469,6 +510,7 @@ export class BaseSourceMapTransformer {
 				scope.line + 1,
 				scope.column,
 			);
+
 			shiftedScopeStartForward = true;
 		}
 
@@ -486,9 +528,11 @@ export class BaseSourceMapTransformer {
 				if (shiftedScopeStartForward) {
 					scope.line--;
 				}
+
 				scope.column = mappedStart.column;
 
 				scope.endLine = mappedEnd.line;
+
 				scope.endColumn = mappedEnd.column;
 			}
 		}

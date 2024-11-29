@@ -28,12 +28,19 @@ export interface IExecutionResultTelemetryProperties {
 	// There is an issue on some clients and reportEvent only currently accept strings properties,
 	// hence all the following properties must be strings.
 	successful?: "true" | "false";
+
 	exceptionType?: ExceptionType;
+
 	exceptionMessage?: string;
+
 	exceptionName?: string;
+
 	exceptionStack?: string;
+
 	exceptionId?: string;
+
 	startTime?: string;
+
 	timeTakenInMilliseconds?: string;
 }
 
@@ -50,6 +57,7 @@ export interface ITelemetryReporter {
 
 export class TelemetryReporter implements ITelemetryReporter {
 	private _sendEvent: (event: DebugProtocol.Event) => void;
+
 	private _globalTelemetryProperties: any = {};
 
 	reportEvent(name: string, data?: any): void {
@@ -66,11 +74,13 @@ export class TelemetryReporter implements ITelemetryReporter {
 		for (const key of prefixTelemetryKeys) {
 			if (combinedData.hasOwnProperty(key)) {
 				combinedData[`!${key}`] = combinedData[key];
+
 				delete combinedData[key];
 			}
 		}
 
 		const event = new OutputEvent(name, "telemetry", combinedData);
+
 		this._sendEvent(event);
 	}
 
@@ -125,6 +135,7 @@ export class AsyncGlobalPropertiesTelemetryReporter
 				this._telemetryReporter.addCustomGlobalProperty(property),
 			(rejection) => this.reportErrorWhileWaitingForProperty(rejection),
 		);
+
 		this._actionsQueue = Promise.all([
 			this._actionsQueue,
 			reportedPropertyP,
@@ -133,8 +144,11 @@ export class AsyncGlobalPropertiesTelemetryReporter
 
 	private reportErrorWhileWaitingForProperty(rejection: any): void {
 		let properties: IExecutionResultTelemetryProperties = {};
+
 		properties.successful = "false";
+
 		properties.exceptionType = "firstChance";
+
 		fillErrorDetails(properties, rejection);
 
 		/* __GDPR__
@@ -165,6 +179,7 @@ export const DefaultTelemetryIntervalInMilliseconds = 10000;
 
 export class BatchTelemetryReporter {
 	private _eventBuckets: { [eventName: string]: any };
+
 	private _timer: NodeJS.Timer;
 
 	public constructor(
@@ -172,6 +187,7 @@ export class BatchTelemetryReporter {
 		private _cadenceInMilliseconds: number = DefaultTelemetryIntervalInMilliseconds,
 	) {
 		this.reset();
+
 		this.setup();
 	}
 
@@ -185,6 +201,7 @@ export class BatchTelemetryReporter {
 
 	public finalize(): void {
 		this.send();
+
 		clearInterval(this._timer);
 	}
 
@@ -204,6 +221,7 @@ export class BatchTelemetryReporter {
 			const bucket = this._eventBuckets[eventName];
 
 			let properties = BatchTelemetryReporter.transfromBucketData(bucket);
+
 			this._telemetryReporter.reportEvent(eventName, properties);
 		}
 
@@ -291,12 +309,14 @@ export class BatchTelemetryReporter {
 				propertyNamesSet[key] = true;
 			}
 		}
+
 		return Object.keys(propertyNamesSet);
 	}
 }
 
 export interface ITelemetryPropertyCollector {
 	getProperties(): { [propertyName: string]: string };
+
 	addTelemetryProperty(propertyName: string, value: string): void;
 }
 

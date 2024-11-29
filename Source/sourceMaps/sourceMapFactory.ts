@@ -52,6 +52,7 @@ export class SourceMapFactory {
 			logger.log(
 				`SourceMaps.getMapForGeneratedPath: Using inlined sourcemap in ${pathToGenerated}`,
 			);
+
 			sourceMapContentsP = Promise.resolve(
 				this.getInlineSourceMapContents(mapPath),
 			);
@@ -60,6 +61,7 @@ export class SourceMapFactory {
 				isInternalRemotePath(pathToGenerated) && originalUrlToGenerated
 					? originalUrlToGenerated
 					: pathToGenerated;
+
 			sourceMapContentsP = this.getSourceMapContent(accessPath, mapPath);
 		}
 
@@ -100,6 +102,7 @@ export class SourceMapFactory {
 
 			return null;
 		}
+
 		const header = sourceMapData.substr(0, firstCommaPos);
 
 		const data = sourceMapData.substr(firstCommaPos + 1);
@@ -160,6 +163,7 @@ export class SourceMapFactory {
 			logger.log(
 				`SourceMaps.loadSourceMapContents: Downloading sourcemap file from ${mapPathOrURL}`,
 			);
+
 			contentsP = this.downloadSourceMapContents(mapPathOrURL).catch(
 				(e) => {
 					logger.log(
@@ -171,16 +175,19 @@ export class SourceMapFactory {
 			);
 		} else {
 			mapPathOrURL = utils.canonicalizeUrl(mapPathOrURL);
+
 			contentsP = new Promise((resolve, reject) => {
 				logger.log(
 					`SourceMaps.loadSourceMapContents: Reading local sourcemap file from ${mapPathOrURL}`,
 				);
+
 				fs.readFile(mapPathOrURL, (err, data) => {
 					if (err) {
 						logger.log(
 							`SourceMaps.loadSourceMapContents: Could not read sourcemap file - ` +
 								err.message,
 						);
+
 						resolve(null);
 					} else {
 						resolve(data && data.toString());
@@ -230,6 +237,7 @@ export class SourceMapFactory {
 				"node-debug2",
 				"sm-cache",
 			);
+
 			cachedSourcemapPath = path.join(cachePath, hash);
 
 			const exists = utils.existsSync(cachedSourcemapPath);
@@ -249,6 +257,7 @@ export class SourceMapFactory {
 			logger.log(
 				`Sourcemaps.downloadSourceMapContents: Caching sourcemap file at ${cachedSourcemapPath}`,
 			);
+
 			await utils.writeFileP(cachedSourcemapPath, responseText);
 		}
 

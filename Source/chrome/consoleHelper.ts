@@ -190,10 +190,13 @@ function resolveParams(
 			currentCollapsedStringArg = currentCollapsedStringArg.slice(
 				curSpecIdx + 2,
 			);
+
 			processedArgs.push(formatted);
 		} else {
 			pushStringArg(currentCollapsedStringArg);
+
 			currentCollapsedStringArg = null;
+
 			processedArgs.push(formatted);
 		}
 	}
@@ -259,6 +262,7 @@ function formatColorArg(arg: Crdp.Runtime.RemoteObject): string {
 						if (color) {
 							escapedSequence += `;${color}`;
 						}
+
 						break;
 
 					case "background":
@@ -267,18 +271,21 @@ function formatColorArg(arg: Crdp.Runtime.RemoteObject): string {
 						if (background) {
 							escapedSequence += `;${background + 10}`;
 						}
+
 						break;
 
 					case "font-weight":
 						if (match[2] === "bold") {
 							escapedSequence += ";1";
 						}
+
 						break;
 
 					case "text-decoration":
 						if (match[2] === "underline") {
 							escapedSequence += ";4";
 						}
+
 						break;
 
 					default:

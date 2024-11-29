@@ -25,6 +25,7 @@ const localize = nls.loadMessageBundle();
  */
 export class RemotePathTransformer extends UrlPathTransformer {
 	private _localRoot: string;
+
 	private _remoteRoot: string;
 
 	public async launch(args: ILaunchRequestArgs): Promise<void> {
@@ -79,6 +80,7 @@ export class RemotePathTransformer extends UrlPathTransformer {
 					}
 
 					this._localRoot = localRoot;
+
 					resolve();
 				});
 			});
@@ -118,7 +120,9 @@ export class RemotePathTransformer extends UrlPathTransformer {
 
 			if (utils.existsSync(localPath)) {
 				source.path = localPath;
+
 				source.sourceReference = undefined;
+
 				source.origin = undefined;
 			}
 		}
@@ -151,6 +155,7 @@ export class RemotePathTransformer extends UrlPathTransformer {
 		let localPath = join(this._localRoot, relPath);
 
 		localPath = utils.fixDriveLetterAndSlashes(localPath);
+
 		logger.log(`Mapped remoteToLocal: ${remotePath} -> ${localPath}`);
 
 		return localPath;
@@ -171,6 +176,7 @@ export class RemotePathTransformer extends UrlPathTransformer {
 			remotePath,
 			/*uppercaseDriveLetter=*/ true,
 		);
+
 		logger.log(`Mapped localToRemote: ${localPath} -> ${remotePath}`);
 
 		return remotePath;

@@ -93,8 +93,11 @@ export class LoggedObjects extends BaseVariableContainer {
 
 export class ScopeContainer extends BaseVariableContainer {
 	private _thisObj: Crdp.Runtime.RemoteObject;
+
 	private _returnValue: Crdp.Runtime.RemoteObject;
+
 	private _frameId: string;
+
 	private _origScopeIndex: number;
 
 	public constructor(
@@ -105,9 +108,13 @@ export class ScopeContainer extends BaseVariableContainer {
 		returnValue?: Crdp.Runtime.RemoteObject,
 	) {
 		super(objectId, "");
+
 		this._thisObj = thisObj;
+
 		this._returnValue = returnValue;
+
 		this._frameId = frameId;
+
 		this._origScopeIndex = origScopeIndex;
 	}
 
@@ -187,6 +194,7 @@ export class ExceptionContainer extends PropertyContainer {
 		exception: Crdp.Runtime.RemoteObject,
 	) {
 		super(exception.objectId, undefined);
+
 		this._exception = exception;
 	}
 
@@ -440,6 +448,7 @@ export function getRemoteObjectPreview_function(
 
 export class VariableHandles {
 	private _variableHandles = new Handles<IVariableContainer>(1);
+
 	private _consoleVariableHandles = new Handles<IVariableContainer>(1e5);
 
 	public onPaused(): void {
@@ -470,6 +479,7 @@ export class VariableHandles {
 
 export interface IPropCount {
 	indexedVariables: number;
+
 	namedVariables: number;
 }
 
@@ -558,6 +568,7 @@ export function createFunctionVariable(
 			value = object.description.substring(0, firstBraceIdx) + "{ … }";
 		} else {
 			const firstArrowIdx = object.description.indexOf("=>");
+
 			value =
 				firstArrowIdx >= 0
 					? object.description.substring(0, firstArrowIdx + 2) + " …"

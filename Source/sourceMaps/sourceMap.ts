@@ -20,7 +20,9 @@ export type MappedPosition = MappedPositionSM;
  */
 export interface ISourcePathDetails {
 	originalPath: string;
+
 	inferredPath: string;
+
 	startPosition: MappedPosition;
 }
 
@@ -34,6 +36,7 @@ export class SourceMap {
 
 	// Original sourcemap details
 	private _originalSources: string[];
+
 	private _originalSourceRoot: string;
 
 	/**
@@ -106,7 +109,9 @@ export class SourceMap {
 		this._generatedPath = generatedPath;
 
 		const sm = JSON.parse(json);
+
 		logger.log(`SourceMap: creating for ${generatedPath}`);
+
 		logger.log(`SourceMap: sourceRoot: ${sm.sourceRoot}`);
 
 		if (sm.sourceRoot && sm.sourceRoot.toLowerCase() === "/source/") {
@@ -114,6 +119,7 @@ export class SourceMap {
 				"Warning: if you are using gulp-sourcemaps < 2.0 directly or indirectly, you may need to set sourceRoot manually in your build config, if your files are not actually under a directory called /source",
 			);
 		}
+
 		logger.log(`SourceMap: sources: ${JSON.stringify(sm.sources)}`);
 
 		if (pathMapping) {
@@ -132,7 +138,9 @@ export class SourceMap {
 		// Overwrite the sourcemap's sourceRoot with the version that's resolved to an absolute path,
 		// so the work above only has to be done once
 		this._originalSourceRoot = sm.sourceRoot;
+
 		this._originalSources = sm.sources;
+
 		sm.sourceRoot = null;
 
 		// sm.sources are initially relative paths, file:/// urls, made-up urls like webpack:///./app.js, or paths that start with /.
@@ -178,6 +186,7 @@ export class SourceMap {
 			// Convert to file:/// url. After this, it's a file URL for an absolute path to a file on disk with forward slashes.
 			// We lowercase so authored <-> generated mapping is not case sensitive.
 			const lowerCaseSourceAbsPath = sourceAbsPath.toLowerCase();
+
 			this._authoredPathCaseMap.set(
 				lowerCaseSourceAbsPath,
 				sourceAbsPath,
@@ -229,6 +238,7 @@ export class SourceMap {
 		if (!position.source) {
 			// If it can't find a match, it returns a mapping with null props. Try looking the other direction.
 			lookupArgs.bias = (<any>SourceMapConsumer).LEAST_UPPER_BOUND;
+
 			position = this._smc.originalPositionFor(lookupArgs);
 		}
 
@@ -278,6 +288,7 @@ export class SourceMap {
 		if (position.line === null) {
 			// If it can't find a match, it returns a mapping with null props. Try looking the other direction.
 			lookupArgs.bias = (<any>SourceMapConsumer).GREATEST_LOWER_BOUND;
+
 			position = this._smc.generatedPositionFor(lookupArgs);
 		}
 

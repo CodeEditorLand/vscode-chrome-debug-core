@@ -53,11 +53,17 @@ export class StackFrames {
 		pauseEvent,
 	}: {
 		args: DebugProtocol.StackTraceArguments;
+
 		scripts: ScriptContainer;
+
 		originProvider: (url: string) => string;
+
 		scriptSkipper: ScriptSkipper;
+
 		smartStepper: SmartStepper;
+
 		transformers: Transformers;
+
 		pauseEvent: Crdp.Debugger.PausedEvent;
 	}): Promise<IStackTraceResponseBody> {
 		let stackFrames = pauseEvent.callFrames
@@ -86,9 +92,11 @@ export class StackFrames {
 			stackFrames,
 			totalFrames,
 		};
+
 		await transformers.pathTransformer.stackTraceResponse(
 			stackTraceResponse,
 		);
+
 		await transformers.sourceMapTransformer.stackTraceResponse(
 			stackTraceResponse,
 		);
@@ -97,6 +105,7 @@ export class StackFrames {
 			stackTraceResponse.stackFrames.map(async (frame) => {
 				// Remove isSourceMapped to convert back to DebugProtocol.StackFrame
 				const isSourceMapped = frame.isSourceMapped;
+
 				delete frame.isSourceMapped;
 
 				if (!frame.source) {
@@ -114,6 +123,7 @@ export class StackFrames {
 					frame.source.origin =
 						(frame.source.origin ? frame.source.origin + " " : "") +
 						getSkipReason("skipFiles");
+
 					frame.source.presentationHint = "deemphasize";
 				} else if (
 					!isSourceMapped &&
@@ -143,6 +153,7 @@ export class StackFrames {
 					ChromeUtils.isEvalScript(frame.source.path)
 				) {
 					frame.source.path = undefined;
+
 					frame.source.name = scripts.displayNameForSourceReference(
 						frame.source.sourceReference,
 					);
@@ -151,6 +162,7 @@ export class StackFrames {
 		);
 
 		transformers.lineColTransformer.stackTraceResponse(stackTraceResponse);
+
 		stackTraceResponse.stackFrames.forEach(
 			(frame) =>
 				(frame.name = this.formatStackFrameName(frame, args.format)),
@@ -168,11 +180,15 @@ export class StackFrames {
 		currentException,
 	}: {
 		args: DebugProtocol.ScopesArguments;
+
 		scripts: ScriptContainer;
+
 		transformers: Transformers;
 
 		variables: VariablesManager;
+
 		pauseEvent: Crdp.Debugger.PausedEvent;
+
 		currentException: any;
 	}): { scopes: DebugProtocol.Scope[] } {
 		const currentFrame = this._frameHandles.get(args.frameId);
@@ -229,8 +245,11 @@ export class StackFrames {
 
 				if (scope.startLocation && scope.endLocation) {
 					resultScope.column = scope.startLocation.columnNumber;
+
 					resultScope.line = scope.startLocation.lineNumber;
+
 					resultScope.endColumn = scope.endLocation.columnNumber;
+
 					resultScope.endLine = scope.endLocation.lineNumber;
 				}
 
@@ -257,6 +276,7 @@ export class StackFrames {
 				currentScriptPath,
 				scopesResponse,
 			);
+
 			transformers.lineColTransformer.scopeResponse(scopesResponse);
 		}
 
@@ -276,8 +296,11 @@ export class StackFrames {
 			scripts,
 			originProvider,
 		);
+
 		await transformers.pathTransformer.fixSource(stackFrame.source);
+
 		await transformers.sourceMapTransformer.fixSourceLocation(stackFrame);
+
 		transformers.lineColTransformer.convertDebuggerLocationToClient(
 			stackFrame,
 		);
@@ -329,13 +352,16 @@ export class StackFrames {
 				utils.existsSync(mapped.source)
 			) {
 				transformers.lineColTransformer.mappedExceptionStack(mapped);
+
 				exceptionLines[i] = exceptionLines[i].replace(
 					`${linePath}:${lineNum}:${columnNum}`,
 					`${mapped.source}:${mapped.line}:${mapped.column}`,
 				);
 			} else if (clientPath && clientPath !== linePath) {
 				const location = { line: adjustedLineNum, column: columnNum };
+
 				transformers.lineColTransformer.mappedExceptionStack(location);
+
 				exceptionLines[i] = exceptionLines[i].replace(
 					`${linePath}:${lineNum}:${columnNum}`,
 					`${clientPath}:${location.line}:${location.column}`,

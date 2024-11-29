@@ -8,9 +8,11 @@ import * as mocha from "mocha";
 
 class LoggingReporter extends mocha.reporters.Spec {
 	static alwaysDumpLogs = false;
+
 	static logEE = new events.EventEmitter();
 
 	private testLogs: string[];
+
 	private inTest = false;
 
 	constructor(runner: any) {
@@ -24,6 +26,7 @@ class LoggingReporter extends mocha.reporters.Spec {
 
 		runner.on("test", (test) => {
 			this.inTest = true;
+
 			this.testLogs = [];
 		});
 
@@ -37,6 +40,7 @@ class LoggingReporter extends mocha.reporters.Spec {
 
 		runner.on("fail", (test) => {
 			this.inTest = false;
+
 			this.dumpLogs();
 
 			console.log(

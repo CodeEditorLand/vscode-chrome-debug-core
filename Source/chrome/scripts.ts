@@ -26,7 +26,9 @@ export interface ISourceContainer {
  */
 export class ScriptContainer {
 	private _scriptsById = new Map<Crdp.Runtime.ScriptId, CrdpScript>();
+
 	private _scriptsByUrl = new Map<string, CrdpScript>();
+
 	private _sourceHandles = new utils.ReverseHandles<ISourceContainer>();
 
 	/**
@@ -63,6 +65,7 @@ export class ScriptContainer {
 			Crdp.Runtime.ScriptId,
 			Crdp.Debugger.ScriptParsedEvent
 		>();
+
 		this._scriptsByUrl = new Map<string, Crdp.Debugger.ScriptParsedEvent>();
 	}
 
@@ -72,6 +75,7 @@ export class ScriptContainer {
 	 */
 	public add(script: Crdp.Debugger.ScriptParsedEvent) {
 		this._scriptsById.set(script.scriptId, script);
+
 		this._scriptsByUrl.set(utils.canonicalizeUrl(script.url), script);
 	}
 

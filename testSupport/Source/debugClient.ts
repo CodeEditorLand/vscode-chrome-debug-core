@@ -68,7 +68,9 @@ export function setBreakpoint(
 
 export interface IExpectedStopLocation {
 	path?: string;
+
 	line?: number;
+
 	column?: number;
 }
 
@@ -198,14 +200,20 @@ export class ExtendedDebugClient extends DebugClient {
 		launchArgs: any,
 		location: {
 			path: string;
+
 			line: number;
+
 			column?: number;
+
 			verified?: boolean;
 		},
 		expected?: {
 			path?: string;
+
 			line?: number;
+
 			column?: number;
+
 			verified?: boolean;
 		},
 	): Promise<any> {
@@ -231,6 +239,7 @@ export class ExtendedDebugClient extends DebugClient {
 								"breakpoint verification mismatch: verified",
 							);
 						}
+
 						if (bp.source && bp.source.path) {
 							this.assertPath(
 								bp.source.path,
@@ -238,6 +247,7 @@ export class ExtendedDebugClient extends DebugClient {
 								"breakpoint verification mismatch: path",
 							);
 						}
+
 						if (typeof bp.line === "number") {
 							assert.equal(
 								bp.line,
@@ -245,6 +255,7 @@ export class ExtendedDebugClient extends DebugClient {
 								"breakpoint verification mismatch: line",
 							);
 						}
+
 						if (
 							typeof location.column === "number" &&
 							typeof bp.column === "number"

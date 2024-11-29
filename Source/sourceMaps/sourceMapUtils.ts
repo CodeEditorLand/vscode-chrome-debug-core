@@ -64,6 +64,7 @@ export function getComputedSourceRoot(
 			);
 
 			const mappedDirname = path.dirname(mappedPath);
+
 			absSourceRoot = utils.properJoin(mappedDirname, sourceRoot);
 		}
 
@@ -72,6 +73,7 @@ export function getComputedSourceRoot(
 		);
 	} else if (path.isAbsolute(generatedPath)) {
 		absSourceRoot = path.dirname(generatedPath);
+
 		logger.log(
 			`SourceMap: no sourceRoot specified, using script dirname: ${absSourceRoot}`,
 		);
@@ -85,13 +87,16 @@ export function getComputedSourceRoot(
 		);
 
 		const scriptPathDirname = mappedPath ? path.dirname(mappedPath) : "";
+
 		absSourceRoot = scriptPathDirname;
+
 		logger.log(
 			`SourceMap: no sourceRoot specified, using webRoot + script path dirname: ${absSourceRoot}`,
 		);
 	}
 
 	absSourceRoot = utils.stripTrailingSlash(absSourceRoot);
+
 	absSourceRoot = utils.fixDriveLetterAndSlashes(absSourceRoot);
 
 	return absSourceRoot;
@@ -166,6 +171,7 @@ export function applySourceMapPathOverrides(
 		const wildcardValue = overridePatternMatches[1];
 
 		let mappedPath = rightPattern.replace(/\*/g, wildcardValue);
+
 		mappedPath = utils.properJoin(mappedPath); // Fix any ..
 		if (
 			isVSClient &&
@@ -182,6 +188,7 @@ export function applySourceMapPathOverrides(
 
 			if (utils.existsSync(pathFixingASPNETBug)) {
 				++aspNetFallbackCount;
+
 				mappedPath = pathFixingASPNETBug;
 			}
 		}
@@ -216,6 +223,7 @@ export function resolveMapPath(
 			const mapUrlPathSegment = utils.isAbsolute(mapPath)
 				? mapPath
 				: path.posix.join(path.dirname(scriptPath), mapPath);
+
 			mapPath = `${scriptUrl.protocol}//${scriptUrl.host}${mapUrlPathSegment}`;
 		} else if (utils.isAbsolute(mapPath)) {
 			mapPath =

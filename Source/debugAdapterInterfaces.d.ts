@@ -25,21 +25,35 @@ export { ITelemetryPropertyCollector } from "./telemetry";
  */
 export interface ICommonRequestArgs {
 	remoteRoot?: string;
+
 	localRoot?: string;
+
 	pathMapping?: IPathMapping;
+
 	outDir?: string;
+
 	outFiles?: string[];
+
 	sourceMaps?: boolean;
+
 	trace?: boolean | string;
+
 	logFilePath?: string;
+
 	logTimestamps?: boolean;
+
 	sourceMapPathOverrides?: ISourceMapPathOverrides;
+
 	smartStep?: boolean;
+
 	skipFiles?: string[]; // an array of file names or glob patterns
 	skipFileRegExps?: string[]; // a supplemental array of library code regex patterns
 	timeout?: number;
+
 	showAsyncStacks?: boolean;
+
 	targetFilter?: ITargetFilter;
+
 	enableSourceMapCaching?: boolean;
 
 	/** Private undocumented property to multiplex the CRDP connection into an additional channel */
@@ -76,7 +90,9 @@ export interface IAttachRequestArgs
 	extends DebugProtocol.AttachRequestArguments,
 		ICommonRequestArgs {
 	port: number;
+
 	url?: string;
+
 	address?: string;
 
 	/** Private undocumented property to attach directly to a known websocket url */
@@ -85,6 +101,7 @@ export interface IAttachRequestArgs
 
 export interface IToggleSkipFileStatusArgs {
 	path?: string;
+
 	sourceReference?: number;
 }
 
@@ -104,6 +121,7 @@ export type ISetBreakpointsResponseBody =
  */
 export interface ISetBreakpointResult {
 	breakpointId?: Crdp.Debugger.BreakpointId;
+
 	actualLocation?: Crdp.Debugger.Location;
 }
 
@@ -153,6 +171,7 @@ export declare type PromiseOrNot<T> = T | Promise<T>;
 
 export interface TimeTravelClient {
 	stepBack(): Promise<any>;
+
 	reverse(): Promise<any>;
 }
 
@@ -173,16 +192,19 @@ export interface IDebugAdapter {
 		telemetryPropertyCollector?: ITelemetryPropertyCollector,
 		requestSeq?: number,
 	): PromiseOrNot<DebugProtocol.Capabilities>;
+
 	launch(
 		args: ILaunchRequestArgs,
 		telemetryPropertyCollector?: ITelemetryPropertyCollector,
 		requestSeq?: number,
 	): PromiseOrNot<void>;
+
 	attach(
 		args: IAttachRequestArgs,
 		telemetryPropertyCollector?: ITelemetryPropertyCollector,
 		requestSeq?: number,
 	): PromiseOrNot<void>;
+
 	disconnect(args: DebugProtocol.DisconnectArguments): PromiseOrNot<void>;
 
 	setBreakpoints(
@@ -196,12 +218,17 @@ export interface IDebugAdapter {
 		telemetryPropertyCollector?: ITelemetryPropertyCollector,
 		requestSeq?: number,
 	): PromiseOrNot<void>;
+
 	configurationDone(): PromiseOrNot<void>;
 
 	continue(): PromiseOrNot<void>;
+
 	next(): PromiseOrNot<void>;
+
 	stepIn(): PromiseOrNot<void>;
+
 	stepOut(): PromiseOrNot<void>;
+
 	pause(): PromiseOrNot<void>;
 
 	stackTrace(
@@ -209,6 +236,7 @@ export interface IDebugAdapter {
 		telemetryPropertyCollector?: ITelemetryPropertyCollector,
 		requestSeq?: number,
 	): PromiseOrNot<IStackTraceResponseBody>;
+
 	scopes(
 		args: DebugProtocol.ScopesArguments,
 		telemetryPropertyCollector?: ITelemetryPropertyCollector,
@@ -220,12 +248,15 @@ export interface IDebugAdapter {
 		telemetryPropertyCollector?: ITelemetryPropertyCollector,
 		requestSeq?: number,
 	): PromiseOrNot<IVariablesResponseBody>;
+
 	source(
 		args: DebugProtocol.SourceArguments,
 		telemetryPropertyCollector?: ITelemetryPropertyCollector,
 		requestSeq?: number,
 	): PromiseOrNot<ISourceResponseBody>;
+
 	threads(): PromiseOrNot<IThreadsResponseBody>;
+
 	evaluate(
 		args: DebugProtocol.EvaluateArguments,
 		telemetryPropertyCollector?: ITelemetryPropertyCollector,
@@ -238,7 +269,9 @@ export interface IDebugTransformer {
 		args: DebugProtocol.InitializeRequestArguments,
 		requestSeq?: number,
 	): PromiseOrNot<void>;
+
 	launch?(args: ILaunchRequestArgs, requestSeq?: number): PromiseOrNot<void>;
+
 	attach?(args: IAttachRequestArgs, requestSeq?: number): PromiseOrNot<void>;
 
 	setBreakpoints?(
@@ -255,6 +288,7 @@ export interface IDebugTransformer {
 		args: DebugProtocol.StackTraceArguments,
 		requestSeq?: number,
 	): PromiseOrNot<void>;
+
 	scopes?(
 		args: DebugProtocol.ScopesArguments,
 		requestSeq?: number,
@@ -264,10 +298,12 @@ export interface IDebugTransformer {
 		args: DebugProtocol.VariablesArguments,
 		requestSeq?: number,
 	): PromiseOrNot<void>;
+
 	source?(
 		args: DebugProtocol.SourceArguments,
 		requestSeq?: number,
 	): PromiseOrNot<void>;
+
 	evaluate?(
 		args: DebugProtocol.EvaluateArguments,
 		requestSeq?: number,
@@ -277,10 +313,12 @@ export interface IDebugTransformer {
 		response: ISetBreakpointsResponseBody,
 		requestSeq?: number,
 	): PromiseOrNot<void>;
+
 	stackTraceResponse?(
 		response: IStackTraceResponseBody,
 		requestSeq?: number,
 	): PromiseOrNot<void>;
+
 	scopesResponse?(
 		response: IScopesResponseBody,
 		requestSeq?: number,
@@ -290,14 +328,17 @@ export interface IDebugTransformer {
 		response: IVariablesResponseBody,
 		requestSeq?: number,
 	): PromiseOrNot<void>;
+
 	sourceResponse?(
 		response: ISourceResponseBody,
 		requestSeq?: number,
 	): PromiseOrNot<void>;
+
 	threadsResponse?(
 		response: IThreadsResponseBody,
 		requestSeq?: number,
 	): PromiseOrNot<void>;
+
 	evaluateResponse?(
 		response: IEvaluateResponseBody,
 		requestSeq?: number,

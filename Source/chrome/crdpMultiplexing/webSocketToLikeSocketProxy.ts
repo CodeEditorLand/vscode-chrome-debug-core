@@ -8,6 +8,7 @@ import * as WebSocket from "ws";
 
 export class WebSocketToLikeSocketProxy {
 	private _server: WebSocket.Server;
+
 	private _currentlyOpenedWebSocket: WebSocket = null;
 
 	constructor(
@@ -22,9 +23,11 @@ export class WebSocketToLikeSocketProxy {
 
 		this._socket.on("close", () => {
 			logger.log("CRDP Proxy shutting down");
+
 			this._server.close(() => {
 				if (this._currentlyOpenedWebSocket !== null) {
 					this._currentlyOpenedWebSocket.close();
+
 					logger.log("CRDP Proxy succesfully shut down");
 				}
 
@@ -41,21 +44,25 @@ export class WebSocketToLikeSocketProxy {
 				);
 			} else {
 				this._currentlyOpenedWebSocket = openedWebSocket;
+
 				logger.log(`CRDP Proxy accepted a new connection`);
 			}
 
 			openedWebSocket.on("message", (data) => {
 				logger.log(`CRDP Proxy - Client to Target: ${data}`);
+
 				this._socket.send(data.toString());
 			});
 
 			openedWebSocket.on("close", () => {
 				logger.log("CRDP Proxy - Client closed the connection");
+
 				this._currentlyOpenedWebSocket = null;
 			});
 
 			this._socket.on("message", (data) => {
 				logger.log(`CRDP Proxy - Target to Client: ${data}`);
+
 				openedWebSocket.send(data);
 			});
 		});

@@ -153,6 +153,7 @@ export function canonicalizeUrl(urlOrPath: string): string {
 	if (urlOrPath == null) {
 		return urlOrPath;
 	}
+
 	urlOrPath = fileUrlToPath(urlOrPath);
 
 	// Remove query params
@@ -161,6 +162,7 @@ export function canonicalizeUrl(urlOrPath: string): string {
 	}
 
 	urlOrPath = stripTrailingSlash(urlOrPath);
+
 	urlOrPath = fixDriveLetterAndSlashes(urlOrPath);
 
 	if (!caseSensitivePaths) {
@@ -188,6 +190,7 @@ export function isFileUrl(candidate: string): boolean {
 export function fileUrlToPath(urlOrPath: string): string {
 	if (isFileUrl(urlOrPath)) {
 		urlOrPath = urlOrPath.replace("file:///", "");
+
 		urlOrPath = decodeURIComponent(urlOrPath);
 
 		if (urlOrPath[0] !== "/" && !urlOrPath.match(/^[A-Za-z]:/)) {
@@ -206,7 +209,9 @@ export function fileUrlToPath(urlOrPath: string): string {
 export function fileUrlToNetworkPath(urlOrPath: string): string {
 	if (isFileUrl(urlOrPath)) {
 		urlOrPath = urlOrPath.replace("file:///", "\\\\");
+
 		urlOrPath = urlOrPath.replace(/\//g, "\\");
+
 		urlOrPath = urlOrPath = decodeURIComponent(urlOrPath);
 	}
 
@@ -236,6 +241,7 @@ export function fixDriveLetterAndSlashes(
 
 	if (aPath.match(/file:\/\/\/[A-Za-z]:/)) {
 		const prefixLen = "file:///".length;
+
 		aPath =
 			aPath.substr(0, prefixLen + 1) +
 			aPath.substr(prefixLen + 1).replace(/\//g, "\\");
@@ -254,6 +260,7 @@ export function fixDriveLetter(
 
 	if (aPath.match(/file:\/\/\/[A-Za-z]:/)) {
 		const prefixLen = "file:///".length;
+
 		aPath =
 			"file:///" +
 			aPath[prefixLen].toLowerCase() +
@@ -263,6 +270,7 @@ export function fixDriveLetter(
 		const driveLetter = uppercaseDriveLetter
 			? aPath[0].toUpperCase()
 			: aPath[0].toLowerCase();
+
 		aPath = driveLetter + aPath.substr(1);
 	}
 
@@ -309,6 +317,7 @@ export function getURL(
 		const parsedUrl = url.parse(aUrl);
 
 		const get = parsedUrl.protocol === "https:" ? https.get : http.get;
+
 		options = <https.RequestOptions>{
 			rejectUnauthorized: false,
 			...parsedUrl,
@@ -317,7 +326,9 @@ export function getURL(
 
 		get(options, (response) => {
 			let responseData = "";
+
 			response.on("data", (chunk) => (responseData += chunk));
+
 			response.on("end", () => {
 				// Sometimes the 'error' event is not fired. Double check here.
 				if (response.statusCode === 200) {
@@ -329,11 +340,13 @@ export function getURL(
 							" " +
 							response.statusMessage.toString(),
 					);
+
 					reject(new Error(responseData.trim()));
 				}
 			});
 		}).on("error", (e) => {
 			logger.log("HTTP GET failed: " + e.toString());
+
 			reject(e);
 		});
 	});
@@ -372,6 +385,7 @@ export function pathToFileURL(_absPath: string, normalize?: boolean): string {
 
 	if (normalize) {
 		absPath = path.normalize(absPath);
+
 		absPath = forceForwardSlashes(absPath);
 	}
 
@@ -413,6 +427,7 @@ export function readFileP(path: string, encoding = "utf8"): Promise<string> {
 export function writeFileP(filePath: string, data: string): Promise<string> {
 	return new Promise((resolve, reject) => {
 		mkdirs(path.dirname(filePath));
+
 		fs.writeFile(filePath, data, (err) => {
 			if (err) {
 				reject(err);
@@ -429,6 +444,7 @@ export function writeFileP(filePath: string, data: string): Promise<string> {
 export function mkdirs(dirsPath: string): void {
 	if (!fs.existsSync(dirsPath)) {
 		mkdirs(path.dirname(dirsPath));
+
 		fs.mkdirSync(dirsPath);
 	}
 }
@@ -450,6 +466,7 @@ function isExclude(pattern: string): boolean {
 
 interface IGlobTask {
 	pattern: string;
+
 	opts: any;
 }
 
@@ -528,6 +545,7 @@ export class ReverseHandles<T> extends Handles<T> {
 
 	public create(value: T): number {
 		const handle = super.create(value);
+
 		this._reverseMap.set(value, handle);
 
 		return handle;
@@ -547,6 +565,7 @@ export class ReverseHandles<T> extends Handles<T> {
 
 	public set(handle: number, value: T): void {
 		(<any>this)._handleMap.set(handle, value);
+
 		this._reverseMap.set(value, handle);
 	}
 }
@@ -572,6 +591,7 @@ export function pathToRegex(aPath: string): string {
 		aPath = escapeRegexSpecialChars(aPath);
 	} else {
 		const escapedAPath = escapeRegexSpecialChars(aPath);
+
 		aPath = `${escapedAPath}|${escapeRegexSpecialChars(pathToFileURL(aPath))}`;
 	}
 
@@ -689,7 +709,9 @@ export function toVoidP(p: Promise<any>): Promise<void> {
 
 export interface PromiseDefer<T> {
 	promise: Promise<void>;
+
 	resolve: (value?: T | PromiseLike<T>) => void;
+
 	reject: (reason?: any) => void;
 }
 
@@ -700,6 +722,7 @@ export function promiseDefer<T>(): PromiseDefer<T> {
 
 	const promise = new Promise<void>((resolve, reject) => {
 		resolveCallback = resolve;
+
 		rejectCallback = reject;
 	});
 
@@ -739,6 +762,7 @@ export function fillErrorDetails(
 	if (e.name) {
 		properties.exceptionName = e.name;
 	}
+
 	if (typeof e.stack === "string") {
 		let unsanitizedStack = e.stack;
 
@@ -751,8 +775,10 @@ export function fillErrorDetails(
 		} catch (exception) {
 			// Ignore error while sanitizing the call stack
 		}
+
 		properties.exceptionStack = unsanitizedStack;
 	}
+
 	if (e.id) {
 		properties.exceptionId = e.id.toString();
 	}

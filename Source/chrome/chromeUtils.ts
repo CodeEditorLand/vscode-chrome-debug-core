@@ -44,6 +44,7 @@ export function applyPathMappingsToTargetUrlPath(
 
 		if (pattern[0] !== "/") {
 			logger.log(`PathMapping keys should be absolute: ${pattern}`);
+
 			pattern = "/" + pattern;
 		}
 
@@ -182,6 +183,7 @@ export function remoteObjectToValue(
 			} else {
 				// If it's a non-null object, create a variable reference so the client can ask for its props
 				variableHandleRef = object.objectId;
+
 				value = object.description;
 			}
 		} else if (object.type === "undefined") {
@@ -194,6 +196,7 @@ export function remoteObjectToValue(
 					object.description.substring(0, firstBraceIdx) + "{ … }";
 			} else {
 				const firstArrowIdx = object.description.indexOf("=>");
+
 				value =
 					firstArrowIdx >= 0
 						? object.description.substring(0, firstArrowIdx + 2) +
@@ -243,6 +246,7 @@ export function getMatchingTargets(
 	};
 
 	targetUrlPattern = standardizeMatch(targetUrlPattern);
+
 	targetUrlPattern = utils
 		.escapeRegexSpecialChars(targetUrlPattern, "/*")
 		.replace(/\*/g, ".*");
@@ -409,15 +413,21 @@ export async function isPortInUse(
 		function createCallback(inUse: boolean) {
 			return () => {
 				resolve(inUse);
+
 				socket.removeAllListeners();
+
 				socket.destroy();
 			};
 		}
 
 		socket.setTimeout(timeout);
+
 		socket.on("connect", createCallback(true));
+
 		socket.on("timeout", createCallback(false));
+
 		socket.on("error", createCallback(false));
+
 		socket.connect(port, host);
 	});
 }

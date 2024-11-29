@@ -87,7 +87,9 @@ let localize = nls.loadMessageBundle();
 
 export interface IPendingBreakpoint {
 	args: ISetBreakpointsArgs;
+
 	ids: number[];
+
 	requestSeq: number;
 
 	setWithPath: string;
@@ -113,12 +115,15 @@ export interface IOnPausedResult {
 
 export interface Transformers {
 	lineColTransformer: LineColTransformer;
+
 	sourceMapTransformer: BaseSourceMapTransformer;
+
 	pathTransformer: BasePathTransformer;
 }
 
 export abstract class ChromeDebugAdapter implements IDebugAdapter {
 	public static EVAL_NAME_PREFIX = ChromeUtils.EVAL_NAME_PREFIX;
+
 	public static EVAL_ROOT = "<eval>";
 
 	/**
@@ -126,44 +131,67 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
 	 * from the adapter.
 	 */
 	private static FILTERED_VARIABLE_NAMES = ["[[StableObjectId]]"];
+
 	private static SCRIPTS_COMMAND = ".scripts";
+
 	private static THREAD_ID = 1;
+
 	private static ASYNC_CALL_STACK_DEPTH = 4;
 
 	protected _session: ChromeDebugSession;
+
 	protected _domains = new Map<CrdpDomain, Crdp.Schema.Domain>();
+
 	private _clientAttached: boolean;
+
 	private _currentPauseNotification: Crdp.Debugger.PausedEvent;
+
 	private _exception: Crdp.Runtime.RemoteObject;
+
 	private _expectingResumedEvent: boolean;
+
 	protected _expectingStopReason: ReasonType;
+
 	private _waitAfterStep = Promise.resolve();
 
 	protected _chromeConnection: ChromeConnection;
 
 	protected _clientRequestedSessionEnd: boolean;
+
 	protected _hasTerminated: boolean;
+
 	protected _inShutdown: boolean;
+
 	protected _attachMode: boolean;
+
 	protected _launchAttachArgs: ICommonRequestArgs;
+
 	protected _port: number;
 
 	private _currentStep = Promise.resolve();
+
 	private _currentLogMessage = Promise.resolve();
+
 	private _pauseOnPromiseRejections = true;
+
 	protected _promiseRejectExceptionFilterEnabled = false;
 
 	private _columnBreakpointsEnabled: boolean;
 
 	private _smartStepEnabled: boolean;
+
 	private _smartStepCount = 0;
+
 	private _earlyScripts: Crdp.Debugger.ScriptParsedEvent[] = [];
 
 	private _initialSourceMapsP = Promise.resolve();
+
 	private _lastPauseState: {
 		expecting: ReasonType;
+
 		event: Crdp.Debugger.PausedEvent;
 	};
+
 	protected _breakOnLoadHelper: BreakOnLoadHelper | null;
 	// Queue to synchronize new source loaded and source removed events so that 'remove' script events
 	// won't be send before the corresponding 'new' event has been sent
@@ -189,15 +217,21 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
 	public get columnBreakpointsEnabled() {
 		return this._columnBreakpointsEnabled;
 	}
+
 	public get breakOnLoadHelper() {
 		return this._breakOnLoadHelper;
 	}
 
 	protected _scriptContainer: ScriptContainer;
+
 	protected _breakpoints: Breakpoints;
+
 	protected _variablesManager: VariablesManager;
+
 	protected _stackFrames: StackFrames;
+
 	protected _smartStepper: SmartStepper;
+
 	protected _scriptSkipper: ScriptSkipper;
 
 	private _transformers: Transformers;
@@ -215,12 +249,16 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
 		session: ChromeDebugSession,
 	) {
 		telemetry.setupEventHandler((e) => session.sendEvent(e));
+
 		this._batchTelemetryReporter = new BatchTelemetryReporter(telemetry);
+
 		this._session = session;
+
 		this._chromeConnection = new (chromeConnection || ChromeConnection)(
 			undefined,
 			targetFilter,
 		);
+
 		this.events = new StepProgressEventsEmitter(
 			this._chromeConnection.events
 				? [this._chromeConnection.events]
@@ -242,8 +280,11 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
 			this,
 			this._chromeConnection,
 		);
+
 		this._variablesManager = new VariablesManager(this._chromeConnection);
+
 		this._stackFrames = new StackFrames();
+
 		this._scriptSkipper = new ScriptSkipper(
 			this._chromeConnection,
 			this._transformers,
@@ -273,9 +314,11 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
 	public get pathTransformer(): BasePathTransformer {
 		return this._transformers.pathTransformer;
 	}
+
 	public get sourceMapTransformer(): BaseSourceMapTransformer {
 		return this._transformers.sourceMapTransformer;
 	}
+
 	public get lineColTransformer(): LineColTransformer {
 		return this._transformers.lineColTransformer;
 	}
@@ -320,7 +363,9 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
 		}
 
 		this._isVSClient = args.clientID === "visualstudio";
+
 		utils.setCaseSensitivePaths(!this._isVSClient);
+
 		this.sourceMapTransformer.isVSClient = this._isVSClient;
 
 		if (args.pathFormat !== "path") {
@@ -335,6 +380,7 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
 		if (typeof args.linesStartAt1 === "boolean") {
 			(<any>this)._clientLinesStartAt1 = args.linesStartAt1;
 		}
+
 		if (typeof args.columnsStartAt1 === "boolean") {
 			(<any>this)._clientColumnsStartAt1 = args.columnsStartAt1;
 		}
@@ -420,6 +466,7 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
 		}
 
 		this.sourceMapTransformer.launch(args);
+
 		await this.pathTransformer.launch(args);
 
 		if (!args.__restart) {
@@ -447,8 +494,11 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
     */
 	public async attach(args: IAttachRequestArgs): Promise<void> {
 		this._attachMode = true;
+
 		this.commonArgs(args);
+
 		this.sourceMapTransformer.attach(args);
+
 		await this.pathTransformer.attach(args);
 
 		if (!args.port) {
@@ -466,6 +516,7 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
 			request: "attach",
 			args: Object.keys(args),
 		});
+
 		await this.doAttach(
 			args.port,
 			args.url,
@@ -483,9 +534,11 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
 
 		if (args.trace === "verbose") {
 			logLevel = Logger.LogLevel.Verbose;
+
 			logToFile = true;
 		} else if (args.trace) {
 			logLevel = Logger.LogLevel.Warn;
+
 			logToFile = true;
 		} else {
 			logLevel = Logger.LogLevel.Warn;
@@ -496,6 +549,7 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
 		// The debug configuration provider should have set logFilePath on the launch config. If not, default to 'true' to use the
 		// "legacy" log file path from the CDA subclass
 		const logFilePath = args.logFilePath || logToFile;
+
 		logger.setup(logLevel, logFilePath, logTimestamps);
 
 		this._launchAttachArgs = args;
@@ -503,6 +557,7 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
 		// Enable sourcemaps and async callstacks by default
 		args.sourceMaps =
 			typeof args.sourceMaps === "undefined" || args.sourceMaps;
+
 		args.showAsyncStacks =
 			typeof args.showAsyncStacks === "undefined" || args.showAsyncStacks;
 
@@ -523,7 +578,9 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
 
 	public shutdown(): void {
 		this._batchTelemetryReporter.finalize();
+
 		this._inShutdown = true;
+
 		this._session.shutdown();
 	}
 
@@ -536,8 +593,11 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
 
 		if (!this._hasTerminated) {
 			logger.log(`Waiting for any pending steps or log messages.`);
+
 			await this._currentStep;
+
 			await this._currentLogMessage;
+
 			logger.log(`Current step and log messages complete`);
 
 			/* __GDPR__
@@ -547,6 +607,7 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
                }
              */
 			telemetry.reportEvent("debugStopped", { reason });
+
 			this._hasTerminated = true;
 
 			if (
@@ -583,7 +644,9 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
 				},
 			);
 		});
+
 		this.chrome.Debugger.on("resumed", () => this.onResumed());
+
 		this.chrome.Debugger.on("scriptParsed", (params) => {
 			/* __GDPR__
                "target/notification/onScriptParsed" : {
@@ -604,15 +667,19 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
 		this.chrome.Console.on("messageAdded", (params) =>
 			this.onMessageAdded(params),
 		);
+
 		this.chrome.Runtime.on("consoleAPICalled", (params) =>
 			this.onConsoleAPICalled(params),
 		);
+
 		this.chrome.Runtime.on("exceptionThrown", (params) =>
 			this.onExceptionThrown(params),
 		);
+
 		this.chrome.Runtime.on("executionContextsCleared", () =>
 			this.onExecutionContextsCleared(),
 		);
+
 		this.chrome.Log.on("entryAdded", (params) =>
 			this.onLogEntryAdded(params),
 		);
@@ -643,14 +710,18 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
 
 		try {
 			await procedure();
+
 			properties.successful = "true";
 		} catch (e) {
 			properties.successful = "false";
+
 			properties.exceptionType = "firstChance";
+
 			utils.fillErrorDetails(properties, e);
 		}
 
 		const elapsedTime = utils.calculateElapsedTime(startTimeMark);
+
 		properties.timeTakenInMilliseconds = elapsedTime.toString();
 
 		// Callers set GDPR annotation
@@ -782,17 +853,21 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
 		// Wait to finish loading sourcemaps from the initial scriptParsed events
 		if (this._initialSourceMapsP) {
 			const initialSourceMapsP = this._initialSourceMapsP;
+
 			this._initialSourceMapsP = null;
 
 			await initialSourceMapsP;
 
 			this._session.sendEvent(new InitializedEvent());
+
 			this.events.emitStepCompleted("NotifyInitialized");
+
 			await Promise.all(
 				this._earlyScripts.map((script) =>
 					this.sendLoadedSourceEvent(script),
 				),
 			);
+
 			this._earlyScripts = null;
 		}
 	}
@@ -808,6 +883,7 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
 		const cachedScriptParsedEvents = Array.from(
 			this._scriptContainer.loadedScripts,
 		);
+
 		this.clearTargetContext();
 
 		return this.doAfterProcessingSourceEvents(async () => {
@@ -826,18 +902,23 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
 			await this.chrome.Debugger.pauseOnAsyncCall({
 				parentStackTraceId: notification.asyncCallStackTraceId,
 			});
+
 			await this.chrome.Debugger.resume();
 
 			return { didPause: false };
 		}
 
 		this._variablesManager.onPaused();
+
 		this._stackFrames.reset();
+
 		this._exception = undefined;
+
 		this._lastPauseState = {
 			event: notification,
 			expecting: expectingStopReason,
 		};
+
 		this._currentPauseNotification = notification;
 
 		// If break on load is active, we pass the notification object to breakonload helper
@@ -865,6 +946,7 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
 
 		if (notification.reason === "exception") {
 			reason = "exception";
+
 			this._exception = notification.data;
 		} else if (notification.reason === "promiseRejection") {
 			reason = "promise_rejection";
@@ -899,6 +981,7 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
 		} else if (expectingStopReason) {
 			// If this was a step, check whether to smart step
 			reason = expectingStopReason;
+
 			shouldSmartStep = await this._shouldSmartStepCallFrame(
 				this._currentPauseNotification.callFrames[0],
 			);
@@ -910,12 +993,14 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
 
 		if (shouldSmartStep) {
 			this._smartStepCount++;
+
 			await this.stepIn(false);
 
 			return { didPause: false };
 		} else {
 			if (this._smartStepCount > 0) {
 				logger.log(`SmartStep: Skipped ${this._smartStepCount} steps`);
+
 				this._smartStepCount = 0;
 			}
 
@@ -930,6 +1015,7 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
 					),
 				);
 			};
+
 			await utils
 				.promiseTimeout(this._currentStep, /*timeoutMs=*/ 300)
 				.then(sendStoppedEvent, sendStoppedEvent);
@@ -997,6 +1083,7 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
 			this._waitAfterStep = utils.promiseTimeout(null, 50);
 		} else {
 			let resumedEvent = new ContinuedEvent(ChromeDebugAdapter.THREAD_ID);
+
 			this._session.sendEvent(resumedEvent);
 		}
 	}
@@ -1011,6 +1098,7 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
 				end: { scriptId, lineNumber: 1, columnNumber: 0 },
 				restrictToFunction: false,
 			});
+
 			this._columnBreakpointsEnabled = true;
 		} catch (e) {
 			this._columnBreakpointsEnabled = false;
@@ -1028,6 +1116,7 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
 			return existingValue;
 		} else {
 			const newValue = promiseDefer<void>();
+
 			this._scriptIdToBreakpointsAreResolvedDefer.set(scriptId, newValue);
 
 			return newValue;
@@ -1039,6 +1128,7 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
 	): Promise<void> {
 		// The stack trace and hash can be large and the DA doesn't need it.
 		delete script.stackTrace;
+
 		delete script.hash;
 
 		const breakpointsAreResolvedDefer = this.getBreakpointsResolvedDefer(
@@ -1053,6 +1143,7 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
 						await this.detectColumnBreakpointSupport(
 							script.scriptId,
 						);
+
 						await this.sendInitializedEvent();
 					}
 				}
@@ -1090,6 +1181,7 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
 						mappedUrl,
 						sources,
 					);
+
 					await this._scriptSkipper.resolveSkipFiles(
 						script,
 						mappedUrl,
@@ -1102,6 +1194,7 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
 					Promise.all([this._initialSourceMapsP, sourceMapsP])
 				);
 			}
+
 			await sourceMapsP;
 
 			breakpointsAreResolvedDefer.resolve(); // By now no matter which code path we choose, resolving pending breakpoints should be finished, so trigger the defer
@@ -1135,6 +1228,7 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
 				} else {
 					loadedSourceEventReason = "new";
 				}
+
 				this._loadedSourcesByScriptId.set(script.scriptId, script);
 
 				break;
@@ -1148,6 +1242,7 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
 
 					return;
 				}
+
 				break;
 
 			default:
@@ -1175,6 +1270,7 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
     */
 	public async toggleSmartStep(): Promise<void> {
 		this._smartStepEnabled = !this._smartStepEnabled;
+
 		this.onPaused(
 			this._lastPauseState.event,
 			this._lastPauseState.expecting,
@@ -1194,6 +1290,7 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
 	): Promise<void> {
 		if (args.path) {
 			args.path = utils.fileUrlToPath(args.path);
+
 			args.path = mapRemoteClientToInternalPath(args.path);
 		}
 
@@ -1204,6 +1301,7 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
 				this._scriptContainer.displayNameForSourceReference(
 					args.sourceReference,
 				);
+
 			logger.log(
 				`Can't toggle the skipFile status for ${logName} - it's not in the current stack.`,
 			);
@@ -1215,6 +1313,7 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
 				this._scriptContainer,
 				this._transformers,
 			);
+
 			this.onPaused(
 				this._lastPauseState.event,
 				this._lastPauseState.expecting,
@@ -1359,6 +1458,7 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
 					e = new OutputEvent(msg, category);
 				} else {
 					e = new OutputEvent("output", category);
+
 					e.body.variablesReference =
 						this._variablesManager.createHandle(
 							new variables.LoggedObjects(objs),
@@ -1373,11 +1473,14 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
 						this._scriptContainer,
 						this.originProvider,
 					);
+
 					e.body.source = mapInternalSourceToRemoteClient(
 						stackFrame.source,
 						this._launchAttachArgs.remoteAuthority,
 					);
+
 					e.body.line = stackFrame.line;
+
 					e.body.column = stackFrame.column;
 				}
 
@@ -1419,11 +1522,14 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
 						this._scriptContainer,
 						this.originProvider,
 					);
+
 					e.body.source = mapInternalSourceToRemoteClient(
 						stackFrame.source,
 						this._launchAttachArgs.remoteAuthority,
 					);
+
 					e.body.line = stackFrame.line;
+
 					e.body.column = stackFrame.column;
 				}
 
@@ -1448,6 +1554,7 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
 					stackTrace: params.message.stack,
 					executionContextId: 1,
 				};
+
 			this.onConsoleAPICalled(onConsoleAPICalledParams);
 		}
 	}
@@ -1465,8 +1572,11 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
 			aspNetClientAppFallbackCount:
 				sourceMapUtils.getAspNetFallbackCount(),
 		});
+
 		this._clientRequestedSessionEnd = true;
+
 		this.shutdown();
+
 		this.terminateSession("Got disconnect request", args);
 	}
 
@@ -1487,6 +1597,7 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
 		if (args.source.path) {
 			args.source.path = mapRemoteClientToInternalPath(args.source.path);
 		}
+
 		this.reportBpTelemetry(args);
 
 		return this._breakpoints.setBreakpoints(
@@ -1502,6 +1613,7 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
 
 		if (args.source.path) {
 			fileExt = path.extname(args.source.path);
+
 			fileExt = path.extname(args.source.path);
 		}
 
@@ -1600,7 +1712,9 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
            }
          */
 		telemetry.reportEvent("nextRequest");
+
 		this._expectingStopReason = "step";
+
 		this._expectingResumedEvent = true;
 
 		return (this._currentStep = this.chrome.Debugger.stepOver().then(
@@ -1636,6 +1750,7 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
 		}
 
 		this._expectingStopReason = "step";
+
 		this._expectingResumedEvent = true;
 
 		return (this._currentStep = this.chrome.Debugger.stepInto({
@@ -1669,7 +1784,9 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
            }
          */
 		telemetry.reportEvent("stepOutRequest");
+
 		this._expectingStopReason = "step";
+
 		this._expectingResumedEvent = true;
 
 		return (this._currentStep = this.chrome.Debugger.stepOut().then(
@@ -1739,6 +1856,7 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
            }
          */
 		telemetry.reportEvent("pauseRequest");
+
 		this._expectingStopReason = "pause";
 
 		return (this._currentStep = this.chrome.Debugger.pause().then(
@@ -1797,6 +1915,7 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
 	public realPathToDisplayPath(realPath: string): string {
 		return this._scriptContainer.realPathToDisplayPath(realPath);
 	}
+
 	public displayPathToRealPath(displayPath: string): string {
 		return this._scriptContainer.displayPathToRealPath(displayPath);
 	}
@@ -2053,7 +2172,9 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
 		);
 
 		const fakeResponse = { stackFrames: [stackFrame] };
+
 		await this.pathTransformer.stackTraceResponse(fakeResponse);
+
 		await this.sourceMapTransformer.stackTraceResponse(fakeResponse);
 
 		return this._smartStepper.shouldSmartStep(
@@ -2083,6 +2204,7 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
 		const waitThenEval = this._waitAfterStep.then(() =>
 			this.doEvaluate(expression, frameId, extraArgs),
 		);
+
 		this._waitAfterStep = waitThenEval.then(
 			() => {},
 			() => {},
@@ -2290,6 +2412,7 @@ export abstract class ChromeDebugAdapter implements IDebugAdapter {
 			for (let name of arrays[i]) {
 				if (!isIndexedPropName(name) && !set.has(name)) {
 					set.add(name);
+
 					items.push({
 						label: <string>name,
 						type: "property",

@@ -31,6 +31,7 @@ const checkLogTest = (
 		return new Promise((resolve, reject) => {
 			const optionalCallback = (e) => {
 				if (e) reject(e);
+
 				else resolve();
 			};
 
@@ -72,6 +73,7 @@ function log(e: DebugProtocol.OutputEvent): void {
 		: "variablesReference: " + e.body.variablesReference;
 
 	const msg = ` ${timestamp} ${outputBody}`;
+
 	LoggingReporter.logEE.emit("log", msg);
 
 	if (msg.indexOf("********") >= 0) unhandledAdapterErrors.push(msg);
@@ -90,6 +92,7 @@ function patchLaunchFn(patchLaunchArgsCb: PatchLaunchArgsCb): void {
 	}
 
 	const origLaunch = dc.launch;
+
 	dc.launch = (launchArgs: any) => {
 		return patchLaunchArgs(launchArgs).then(() =>
 			origLaunch.call(dc, launchArgs),
@@ -97,6 +100,7 @@ function patchLaunchFn(patchLaunchArgsCb: PatchLaunchArgsCb): void {
 	};
 
 	const origAttachRequest = dc.attachRequest;
+
 	dc.attachRequest = (attachArgs: any) => {
 		return patchLaunchArgs(attachArgs).then(() =>
 			origAttachRequest.call(dc, attachArgs),
@@ -106,14 +110,19 @@ function patchLaunchFn(patchLaunchArgsCb: PatchLaunchArgsCb): void {
 
 export interface ISetupOpts {
 	entryPoint: string;
+
 	type: string;
+
 	patchLaunchArgs?: PatchLaunchArgsCb;
+
 	port?: number;
+
 	alwaysDumpLogs?: boolean;
 }
 
 export function setup(opts: ISetupOpts): Promise<ExtendedDebugClient> {
 	unhandledAdapterErrors = [];
+
 	dc = new ExtendedDebugClient("node", opts.entryPoint, opts.type);
 
 	if (opts.patchLaunchArgs) {
@@ -121,6 +130,7 @@ export function setup(opts: ISetupOpts): Promise<ExtendedDebugClient> {
 	}
 
 	LoggingReporter.alwaysDumpLogs = opts.alwaysDumpLogs;
+
 	dc.addListener("output", log);
 
 	return dc.start(opts.port).then(() => dc);

@@ -13,11 +13,13 @@ import { ScriptContainer } from "./scripts";
 
 export class ScriptSkipper {
 	private _skipFileStatuses = new Map<string, boolean>();
+
 	private _blackboxedRegexes: RegExp[] = [];
 
 	private get chrome() {
 		return this._chromeConnection.api;
 	}
+
 	constructor(
 		private readonly _chromeConnection: ChromeConnection,
 		private readonly _transformers: Transformers,
@@ -52,6 +54,7 @@ export class ScriptSkipper {
 			this._blackboxedRegexes = patterns.map(
 				(pattern) => new RegExp(pattern, "i"),
 			);
+
 			this.refreshBlackboxPatterns();
 		}
 	}
@@ -96,9 +99,11 @@ export class ScriptSkipper {
 		}
 
 		const newStatus = !this.shouldSkipSource(aPath);
+
 		logger.log(
 			`Setting the skip file status for: ${aPath} to ${newStatus}`,
 		);
+
 		this._skipFileStatuses.set(aPath, newStatus);
 
 		const targetPath =
@@ -210,6 +215,7 @@ export class ScriptSkipper {
 				const positions = status
 					? [{ lineNumber: 0, columnNumber: 0 }]
 					: [];
+
 				this.chrome.Debugger.setBlackboxedRanges({
 					scriptId: script.scriptId,
 					positions,
@@ -220,8 +226,10 @@ export class ScriptSkipper {
 
 	private makeRegexesNotSkip(noSkipPath: string): void {
 		let somethingChanged = false;
+
 		this._blackboxedRegexes = this._blackboxedRegexes.map((regex) => {
 			const result = utils.makeRegexNotMatchPath(regex, noSkipPath);
+
 			somethingChanged = somethingChanged || result !== regex;
 
 			return result;
@@ -234,8 +242,10 @@ export class ScriptSkipper {
 
 	private makeRegexesSkip(skipPath: string): void {
 		let somethingChanged = false;
+
 		this._blackboxedRegexes = this._blackboxedRegexes.map((regex) => {
 			const result = utils.makeRegexMatchPath(regex, skipPath);
+
 			somethingChanged = somethingChanged || result !== regex;
 
 			return result;
