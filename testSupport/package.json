@@ -1,13 +1,13 @@
 {
-	"dependencies": {},
+	"name": "@codeeditorland/chrome-debug-core-testsupport",
 	"description": "Tools for tests that use vscode-debugadapter-testsupport and vscode-chrome-debug-core",
-	"devDependencies": {
-		"@types/node": "22.10.1"
-	},
 	"main": "out/index.js",
-	"name": "vscode-chrome-debug-core-testsupport",
+	"typings": "out/index.d.ts",
 	"scripts": {
 		"build": "tsc -w"
 	},
-	"typings": "out/index.d.ts"
+	"dependencies": {},
+	"devDependencies": {
+		"@types/node": "22.10.1"
+	}
 }
