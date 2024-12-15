@@ -31,7 +31,6 @@ const checkLogTest = (
 		return new Promise((resolve, reject) => {
 			const optionalCallback = (e) => {
 				if (e) reject(e);
-
 				else resolve();
 			};
 

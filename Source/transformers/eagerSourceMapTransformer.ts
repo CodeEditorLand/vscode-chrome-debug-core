@@ -119,9 +119,7 @@ export class EagerSourceMapTransformer extends BaseSourceMapTransformer {
 
 		for (
 			let l = lines.length - 1;
-
 			l >= Math.max(lines.length - 10, 0);
-
 			l--
 		) {
 			// only search for url in the last 10 lines
