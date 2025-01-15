@@ -27,7 +27,7 @@
 	"dependencies": {
 		"@types/source-map": "0.5.7",
 		"color": "4.2.3",
-		"devtools-protocol": "0.0.1404580",
+		"devtools-protocol": "0.0.1406504",
 		"glob": "11.0.1",
 		"noice-json-rpc": "1.2.0",
 		"source-map": "0.7.4",
